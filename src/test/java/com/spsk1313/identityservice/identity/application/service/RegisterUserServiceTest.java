@@ -4,6 +4,7 @@ import com.spsk1313.identityservice.identity.application.command.RegisterUserCom
 import com.spsk1313.identityservice.identity.application.exception.DuplicateEmailException;
 import com.spsk1313.identityservice.identity.application.exception.InvalidPasswordException;
 import com.spsk1313.identityservice.identity.application.policy.PasswordPolicy;
+import com.spsk1313.identityservice.identity.application.port.in.EmailVerificationIssuer;
 import com.spsk1313.identityservice.identity.application.port.out.PasswordHasher;
 import com.spsk1313.identityservice.identity.application.port.out.UserRepository;
 import com.spsk1313.identityservice.identity.application.result.RegisterUserResult;
@@ -30,7 +31,8 @@ public class RegisterUserServiceTest {
     @Mock
     PasswordHasher passwordHasher;
 
-    private PasswordPolicy passwordPolicy;
+    @Mock
+    EmailVerificationIssuer emailVerificationIssuer;
 
     private RegisterUserService registerUserService;
 
@@ -41,8 +43,8 @@ public class RegisterUserServiceTest {
 
     @BeforeEach
     void setUp() {
-        passwordPolicy = new PasswordPolicy();
-        registerUserService = new RegisterUserService(userRepository, passwordHasher, passwordPolicy);
+        PasswordPolicy passwordPolicy = new PasswordPolicy();
+        registerUserService = new RegisterUserService(userRepository, passwordHasher, passwordPolicy, emailVerificationIssuer);
     }
 
     @Test
@@ -76,6 +78,8 @@ public class RegisterUserServiceTest {
 
         User capturedUser = captor.getValue();
         assertEquals(PASSWORD_HASH, capturedUser.getPasswordHash());
+
+        verify(emailVerificationIssuer).issue(persistedUser.getId(), persistedUser.getEmail().value());
     }
 
 
@@ -89,6 +93,7 @@ public class RegisterUserServiceTest {
 
         verifyNoInteractions(passwordHasher);
         verify(userRepository, never()).save(any(User.class));
+        verifyNoInteractions(emailVerificationIssuer);
     }
 
     @Test
@@ -99,6 +104,7 @@ public class RegisterUserServiceTest {
 
         verifyNoInteractions(passwordHasher);
         verifyNoInteractions(userRepository);
+        verifyNoInteractions(emailVerificationIssuer);
     }
 
 }

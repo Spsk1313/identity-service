@@ -1,5 +1,6 @@
 package com.spsk1313.identityservice.identity.application.service;
 
+import com.spsk1313.identityservice.identity.application.port.in.EmailVerificationIssuer;
 import com.spsk1313.identityservice.identity.application.port.out.EmailVerificationTokenRepository;
 import com.spsk1313.identityservice.identity.application.port.out.RawTokenGenerator;
 import com.spsk1313.identityservice.identity.application.port.out.TokenHasher;
@@ -15,7 +16,7 @@ import java.time.Instant;
 import java.util.Optional;
 
 @Service
-public class IssueEmailVerificationService {
+public class IssueEmailVerificationService implements EmailVerificationIssuer {
 
     private final EmailVerificationTokenRepository tokenRepository;
     private final RawTokenGenerator tokenGenerator;
@@ -41,8 +42,8 @@ public class IssueEmailVerificationService {
         this.clock = clock;
         this.baseUrl = baseUrl;
     }
-
-    @Transactional
+    
+    @Override
     public void issue(Long userId, String email) {
         Instant now = clock.instant();
 
