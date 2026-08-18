@@ -1,0 +1,48 @@
+package com.spsk1313.identityservice.identity.infrastructure.persistence.repository;
+
+import com.spsk1313.identityservice.identity.application.exception.DuplicateEmailException;
+import com.spsk1313.identityservice.identity.application.port.out.UserRepository;
+import com.spsk1313.identityservice.identity.domain.EmailAddress;
+import com.spsk1313.identityservice.identity.domain.User;
+import com.spsk1313.identityservice.identity.infrastructure.persistence.mapper.UserPersistenceMapper;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
+import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
+import org.springframework.context.annotation.Import;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
+import org.testcontainers.postgresql.PostgreSQLContainer;
+
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
+@DataJpaTest
+@Testcontainers
+@Import({
+        JpaUserRepositoryAdapter.class,
+        UserPersistenceMapper.class
+})
+public class JpaUserRepositoryAdapterTest {
+
+    @Container
+    @ServiceConnection
+    static PostgreSQLContainer postgres = new PostgreSQLContainer("postgres:17");
+
+    @Autowired
+    private UserRepository userRepository;
+
+    private static final String EMAIL_STR = "sahil@example.com";
+    private static final EmailAddress EMAIL = new EmailAddress(EMAIL_STR);
+    private static final String PASSWORD_HASH = "$2a$12$R9h/cIPz0gi.Ns1KVptSMu7iUBvZovwAt6b7S27v.S3U7fT6yYpqu";
+
+    @Test
+    void shouldRejectDuplicateEmailAtDatabaseBoundary() {
+        User user1 = User.register(EMAIL, PASSWORD_HASH);
+        User user2 = User.register(EMAIL, PASSWORD_HASH);
+
+        userRepository.save(user1);
+        var ex = assertThrows(DuplicateEmailException.class, () -> userRepository.save(user2));
+    }
+
+}

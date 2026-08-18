@@ -1,10 +1,13 @@
 package com.spsk1313.identityservice.identity.infrastructure.persistence.repository;
 
+import com.spsk1313.identityservice.identity.application.exception.DuplicateEmailException;
 import com.spsk1313.identityservice.identity.application.port.out.UserRepository;
 import com.spsk1313.identityservice.identity.domain.EmailAddress;
 import com.spsk1313.identityservice.identity.domain.User;
 import com.spsk1313.identityservice.identity.infrastructure.persistence.entity.UserJpaEntity;
 import com.spsk1313.identityservice.identity.infrastructure.persistence.mapper.UserPersistenceMapper;
+import org.hibernate.exception.ConstraintViolationException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Repository;
 
 @Repository
@@ -12,6 +15,7 @@ public class JpaUserRepositoryAdapter implements UserRepository {
 
     private final SpringDataUserRepository userRepository;
     private final UserPersistenceMapper mapper;
+    private static final String UNIQUE_EMAIL_CONSTRAINT = "uq_users_email";
 
     public JpaUserRepositoryAdapter(SpringDataUserRepository userRepository, UserPersistenceMapper mapper) {
         this.userRepository = userRepository;
@@ -25,8 +29,17 @@ public class JpaUserRepositoryAdapter implements UserRepository {
 
     @Override
     public User save(User user) {
-        UserJpaEntity entity = mapper.toEntity(user);
-        entity = userRepository.save(entity);
-        return mapper.toDomain(entity);
+        try {
+            UserJpaEntity entity = mapper.toEntity(user);
+            entity = userRepository.save(entity);
+            return mapper.toDomain(entity);
+        } catch (DataIntegrityViolationException ex) {
+            if (ex.getCause() instanceof ConstraintViolationException constraintViolation
+                    && UNIQUE_EMAIL_CONSTRAINT.equals(constraintViolation.getConstraintName())) {
+                throw new DuplicateEmailException();
+            }
+
+            throw ex;
+        }
     }
 }
