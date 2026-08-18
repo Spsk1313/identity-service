@@ -71,7 +71,7 @@ public class AuthControllerTest {
 
         String json = """
                 {
-                    "email": "example.com",
+                    "email": "",
                     "password": ""
                 }
                 """;
