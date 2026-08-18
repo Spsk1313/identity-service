@@ -1,0 +1,5 @@
+package com.spsk1313.identityservice.identity.application.port.out;
+
+public interface PasswordHasher {
+    String hash(String rawPassword);
+}
