@@ -1,5 +1,6 @@
 package com.spsk1313.identityservice.identity.domain;
 
+import com.spsk1313.identityservice.identity.domain.exception.InvalidEmailException;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -17,17 +18,17 @@ public class EmailAddressTest {
 
     @Test
     void shouldRejectNullEmail() {
-        assertThrows(IllegalArgumentException.class, () -> new EmailAddress(null));
+        assertThrows(InvalidEmailException.class, () -> new EmailAddress(null));
     }
 
     @Test
     void shouldRejectBlankEmail() {
-        assertThrows(IllegalArgumentException.class, () -> new EmailAddress("   "));
+        assertThrows(InvalidEmailException.class, () -> new EmailAddress("   "));
     }
 
     @Test
     void shouldRejectInvalidEmail() {
-        assertThrows(IllegalArgumentException.class, () -> new EmailAddress("abd@de"));
+        assertThrows(InvalidEmailException.class, () -> new EmailAddress("abd@de"));
     }
 
     @Test
@@ -44,7 +45,7 @@ public class EmailAddressTest {
         String input = "a".repeat(244) + "@example.com";
 
         assertEquals(256, input.length());
-        assertThrows(IllegalArgumentException.class, () -> new EmailAddress(input));
+        assertThrows(InvalidEmailException.class, () -> new EmailAddress(input));
     }
 
     @Test
