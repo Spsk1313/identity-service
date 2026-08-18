@@ -7,8 +7,13 @@ import org.testcontainers.postgresql.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
-@SpringBootTest
+
 @Testcontainers
+@SpringBootTest(properties = {
+        "spring.mail.host=localhost",
+        "spring.mail.port=1025",
+        "app.verification.base-url=http://localhost:8080"
+})
 class IdentityServiceApplicationTests {
 
     @Container
