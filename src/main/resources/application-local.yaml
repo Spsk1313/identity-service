@@ -13,9 +13,16 @@ spring:
       host: localhost
       port: 6379
 
+  mail:
+    host: localhost
+    port: 1025
+
 logging:
   level:
     com.spsk1313.identityservice: DEBUG
   pattern:
     correlation: '%replace( [requestId=%X{requestId}] ){''\[requestId=\s*\]'', ''''}'
 
+app:
+  verification:
+    base-url: http://localhost:8080
