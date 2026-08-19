@@ -64,6 +64,18 @@ public class UserJpaEntity {
         this.accountStatus = accountStatus;
     }
 
+    public void updateFromDomain(
+            String email,
+            String passwordHash,
+            boolean emailVerified,
+            AccountStatus accountStatus
+    ) {
+        this.email = email;
+        this.passwordHash = passwordHash;
+        this.emailVerified = emailVerified;
+        this.accountStatus = accountStatus;
+    }
+
     public Long getId() {
         return id;
     }

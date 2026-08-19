@@ -42,7 +42,7 @@ public class IssueEmailVerificationService implements EmailVerificationIssuer {
         this.clock = clock;
         this.baseUrl = baseUrl;
     }
-    
+
     @Override
     public void issue(Long userId, String email) {
         Instant now = clock.instant();

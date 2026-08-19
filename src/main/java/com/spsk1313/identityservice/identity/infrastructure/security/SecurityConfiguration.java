@@ -18,14 +18,22 @@ public class SecurityConfiguration {
    @Bean
     SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception{
        http
-               .authorizeHttpRequests(auth ->
-                       auth.requestMatchers(HttpMethod.POST, "/api/auth/register")
-                               .permitAll()
-                               .anyRequest().authenticated())
+               .authorizeHttpRequests(auth -> auth
+                       .requestMatchers(
+                               HttpMethod.POST,
+                               "/api/auth/register",
+                               "/api/auth/verify-email"
+                       )
+                       .permitAll()
+                       .anyRequest()
+                       .authenticated()
+               )
                .httpBasic(AbstractHttpConfigurer::disable)
                .formLogin(AbstractHttpConfigurer::disable)
                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-               .csrf(csrf -> csrf.ignoringRequestMatchers(PathPatternRequestMatcher.pathPattern(HttpMethod.POST, "/api/auth/register")))
+               .csrf(csrf -> csrf.ignoringRequestMatchers(
+                       PathPatternRequestMatcher.pathPattern(HttpMethod.POST, "/api/auth/register"),
+                       PathPatternRequestMatcher.pathPattern(HttpMethod.POST, "/api/auth/verify-email")))
                .exceptionHandling(exceptions ->
                        exceptions.authenticationEntryPoint(
                                ((request, response, authException) -> {

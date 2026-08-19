@@ -3,6 +3,7 @@ package com.spsk1313.identityservice.identity.infrastructure.security;
 import com.spsk1313.identityservice.identity.application.command.RegisterUserCommand;
 import com.spsk1313.identityservice.identity.application.result.RegisterUserResult;
 import com.spsk1313.identityservice.identity.application.service.RegisterUserService;
+import com.spsk1313.identityservice.identity.application.service.VerifyEmailService;
 import com.spsk1313.identityservice.identity.domain.AccountStatus;
 import com.spsk1313.identityservice.identity.web.controller.AuthController;
 import org.junit.jupiter.api.BeforeEach;
@@ -17,6 +18,7 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -25,13 +27,16 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @WebMvcTest(AuthController.class)
 @Import(SecurityConfiguration.class)
-public class SecurityConfigurationTest {
+class SecurityConfigurationTest {
 
     @Autowired
     private WebApplicationContext context;
 
     @MockitoBean
     private RegisterUserService registerUserService;
+
+    @MockitoBean
+    private VerifyEmailService verifyEmailService;
 
     private MockMvc mockMvc;
 
@@ -45,9 +50,16 @@ public class SecurityConfigurationTest {
 
     @Test
     void shouldAllowAnonymousUserToAccessRegistrationEndpoint() throws Exception {
-        RegisterUserResult response = new RegisterUserResult(1L, "sahil@example.com", false, AccountStatus.ACTIVE);
+        RegisterUserResult response =
+                new RegisterUserResult(
+                        1L,
+                        "sahil@example.com",
+                        false,
+                        AccountStatus.ACTIVE
+                );
 
-        when(registerUserService.register(any(RegisterUserCommand.class))).thenReturn(response);
+        when(registerUserService.register(any(RegisterUserCommand.class)))
+                .thenReturn(response);
 
         String json = """
                 {
@@ -56,16 +68,31 @@ public class SecurityConfigurationTest {
                 }
                 """;
 
-        mockMvc.perform(post("/api/auth/register")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(json))
+        mockMvc.perform(
+                        post("/api/auth/register")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(json)
+                )
                 .andExpect(status().isCreated());
-
-
     }
 
     @Test
-    void shouldReturn401WhenAnonymousUserAccessesProtectedEndpoint() throws Exception {
+    void shouldAllowAnonymousUserToVerifyEmail() throws Exception {
+        String rawToken = "raw-verification-token";
+
+        mockMvc.perform(
+                        post("/api/auth/verify-email")
+                                .param("token", rawToken)
+                )
+                .andExpect(status().isNoContent());
+
+        verify(verifyEmailService).verify(rawToken);
+    }
+
+    @Test
+    void shouldReturn401WhenAnonymousUserAccessesProtectedEndpoint()
+            throws Exception {
+
         mockMvc.perform(get("/api/protected"))
                 .andExpect(status().isUnauthorized());
     }

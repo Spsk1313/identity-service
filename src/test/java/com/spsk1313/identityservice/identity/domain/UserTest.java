@@ -27,8 +27,18 @@ class UserTest {
     void shouldVerifyEmail() {
         User user = User.register(EMAIL, PASSWORD_HASH);
 
+        assertFalse(user.isEmailVerified());
+
         user.verifyEmail();
 
+        assertTrue(user.isEmailVerified());
+    }
+
+    @Test
+    void shouldMakeEmailVerificationIdempotent() {
+        User user = User.register(EMAIL, PASSWORD_HASH);
+        user.verifyEmail();
+        user.verifyEmail();
         assertTrue(user.isEmailVerified());
     }
 
