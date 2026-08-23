@@ -13,7 +13,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.Optional;
 
 @Service
 public class IssueEmailVerificationService implements EmailVerificationIssuer {
@@ -44,6 +43,7 @@ public class IssueEmailVerificationService implements EmailVerificationIssuer {
     }
 
     @Override
+    @Transactional
     public void issue(Long userId, String email) {
         Instant now = clock.instant();
 

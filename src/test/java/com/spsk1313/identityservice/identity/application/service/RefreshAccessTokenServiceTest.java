@@ -45,7 +45,7 @@ class RefreshAccessTokenServiceTest {
     private TokenHasher tokenHasher;
 
     @Mock
-    private RefreshTokenGenerator tokenGenerator;
+    private RawTokenGenerator tokenGenerator;
 
     @Mock
     private AccessTokenIssuer accessTokenIssuer;

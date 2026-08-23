@@ -1,11 +1,7 @@
 package com.spsk1313.identityservice.identity.web.controller;
 
-import com.spsk1313.identityservice.identity.application.command.LoginCommand;
-import com.spsk1313.identityservice.identity.application.command.RegisterUserCommand;
-import com.spsk1313.identityservice.identity.application.exception.DuplicateEmailException;
-import com.spsk1313.identityservice.identity.application.exception.InvalidPasswordException;
-import com.spsk1313.identityservice.identity.application.exception.InvalidRefreshTokenException;
-import com.spsk1313.identityservice.identity.application.exception.VerificationTokenNotFoundException;
+import com.spsk1313.identityservice.identity.application.command.*;
+import com.spsk1313.identityservice.identity.application.exception.*;
 import com.spsk1313.identityservice.identity.application.result.LoginResult;
 import com.spsk1313.identityservice.identity.application.result.RegisterUserResult;
 import com.spsk1313.identityservice.identity.application.service.*;
@@ -23,7 +19,6 @@ import org.springframework.http.ResponseCookie;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
-import com.spsk1313.identityservice.identity.application.command.RefreshAccessTokenCommand;
 import com.spsk1313.identityservice.identity.application.result.RefreshAccessTokenResult;
 
 import jakarta.servlet.http.Cookie;
@@ -59,6 +54,12 @@ class AuthControllerTest {
 
     @Mock
     private LogoutService logoutService;
+
+    @Mock
+    private ForgotPasswordService forgotPasswordService;
+
+    @Mock
+    private ResetPasswordService resetPasswordService;
 
     @InjectMocks
     private AuthController authController;
@@ -498,6 +499,167 @@ class AuthControllerTest {
                 .andExpect(status().isNoContent());
 
         verify(logoutService).logout(null);
+    }
+
+    @Test
+    void shouldAcceptForgotPasswordRequest() throws Exception {
+        String json = """
+            {
+                "email": "login-test@example.com"
+            }
+            """;
+
+        mockMvc.perform(
+                        post("/api/auth/forgot-password")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(json)
+                )
+                .andExpect(status().isNoContent());
+
+        verify(forgotPasswordService)
+                .forgotPassword(
+                        new ForgotPasswordCommand(
+                                "login-test@example.com"
+                        )
+                );
+    }
+
+    @Test
+    void shouldReturnSameResponseForForgotPasswordRegardlessOfAccountExistence()
+            throws Exception {
+
+        String json = """
+            {
+                "email": "does-not-exist@example.com"
+            }
+            """;
+
+        mockMvc.perform(
+                        post("/api/auth/forgot-password")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(json)
+                )
+                .andExpect(status().isNoContent());
+
+        verify(forgotPasswordService)
+                .forgotPassword(
+                        new ForgotPasswordCommand(
+                                "does-not-exist@example.com"
+                        )
+                );
+    }
+
+    @Test
+    void shouldReturn400WhenForgotPasswordEmailIsInvalid()
+            throws Exception {
+
+        String json = """
+            {
+                "email": "not-an-email"
+            }
+            """;
+
+        mockMvc.perform(
+                        post("/api/auth/forgot-password")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(json)
+                )
+                .andExpect(status().isBadRequest());
+
+        verifyNoInteractions(forgotPasswordService);
+    }
+
+    @Test
+    void shouldResetPassword() throws Exception {
+        String json = """
+            {
+                "token": "valid-reset-token",
+                "newPassword": "new-secure-password"
+            }
+            """;
+
+        mockMvc.perform(
+                        post("/api/auth/reset-password")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(json)
+                )
+                .andExpect(status().isNoContent());
+
+        verify(resetPasswordService)
+                .resetPassword(
+                        new ResetPasswordCommand(
+                                "valid-reset-token",
+                                "new-secure-password"
+                        )
+                );
+    }
+
+    @Test
+    void shouldReturn400WhenResetPasswordTokenIsMissing()
+            throws Exception {
+
+        String json = """
+            {
+                "token": "",
+                "newPassword": "new-secure-password"
+            }
+            """;
+
+        mockMvc.perform(
+                        post("/api/auth/reset-password")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(json)
+                )
+                .andExpect(status().isBadRequest());
+
+        verifyNoInteractions(resetPasswordService);
+    }
+
+    @Test
+    void shouldReturn400WhenNewPasswordIsTooShort()
+            throws Exception {
+
+        String json = """
+            {
+                "token": "valid-reset-token",
+                "newPassword": "short"
+            }
+            """;
+
+        mockMvc.perform(
+                        post("/api/auth/reset-password")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(json)
+                )
+                .andExpect(status().isBadRequest());
+
+        verifyNoInteractions(resetPasswordService);
+    }
+
+    @Test
+    void shouldReturn400WhenPasswordResetTokenIsInvalid()
+            throws Exception {
+
+        doThrow(new InvalidPasswordResetTokenException())
+                .when(resetPasswordService)
+                .resetPassword(any(ResetPasswordCommand.class));
+
+        String json = """
+            {
+                "token": "invalid-reset-token",
+                "newPassword": "new-secure-password"
+            }
+            """;
+
+        mockMvc.perform(
+                        post("/api/auth/reset-password")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(json)
+                )
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.message")
+                        .value("Invalid or expired password reset token"));
     }
 
 }

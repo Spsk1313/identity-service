@@ -1,16 +1,16 @@
 package com.spsk1313.identityservice.identity.web.controller;
 
-import com.spsk1313.identityservice.identity.application.command.LoginCommand;
-import com.spsk1313.identityservice.identity.application.command.RefreshAccessTokenCommand;
-import com.spsk1313.identityservice.identity.application.command.RegisterUserCommand;
+import com.spsk1313.identityservice.identity.application.command.*;
 import com.spsk1313.identityservice.identity.application.exception.InvalidRefreshTokenException;
 import com.spsk1313.identityservice.identity.application.result.LoginResult;
 import com.spsk1313.identityservice.identity.application.result.RefreshAccessTokenResult;
 import com.spsk1313.identityservice.identity.application.result.RegisterUserResult;
 import com.spsk1313.identityservice.identity.application.service.*;
 import com.spsk1313.identityservice.identity.web.cookie.RefreshTokenCookieFactory;
+import com.spsk1313.identityservice.identity.web.request.ForgotPasswordRequest;
 import com.spsk1313.identityservice.identity.web.request.LoginRequest;
 import com.spsk1313.identityservice.identity.web.request.RegisterUserRequest;
+import com.spsk1313.identityservice.identity.web.request.ResetPasswordRequest;
 import com.spsk1313.identityservice.identity.web.response.LoginResponse;
 import com.spsk1313.identityservice.identity.web.response.RefreshAccessTokenResponse;
 import com.spsk1313.identityservice.identity.web.response.RegisterUserResponse;
@@ -36,6 +36,8 @@ public class AuthController {
     private final RefreshAccessTokenService refreshAccessTokenService;
     private final LogoutService logoutService;
     private final LogoutAllService logoutAllService;
+    private final ForgotPasswordService forgotPasswordService;
+    private final ResetPasswordService resetPasswordService;
 
     public AuthController(
             RegisterUserService registerUserService,
@@ -44,7 +46,9 @@ public class AuthController {
             RefreshTokenCookieFactory refreshTokenCookieFactory,
             RefreshAccessTokenService refreshAccessTokenService,
             LogoutService logoutService,
-            LogoutAllService logoutAllService
+            LogoutAllService logoutAllService,
+            ForgotPasswordService forgotPasswordService,
+            ResetPasswordService resetPasswordService
     ) {
         this.registerUserService = registerUserService;
         this.verifyEmailService = verifyEmailService;
@@ -53,6 +57,8 @@ public class AuthController {
         this.refreshAccessTokenService = refreshAccessTokenService;
         this.logoutService = logoutService;
         this.logoutAllService = logoutAllService;
+        this.forgotPasswordService = forgotPasswordService;
+        this.resetPasswordService = resetPasswordService;
     }
 
     @PostMapping("/register")
@@ -178,6 +184,33 @@ public class AuthController {
                         clearedCookie.toString()
                 )
                 .build();
+    }
+
+    @PostMapping("/forgot-password")
+    public ResponseEntity<Void> forgotPassword(
+            @Valid @RequestBody ForgotPasswordRequest request
+    ) {
+        forgotPasswordService.forgotPassword(
+                new ForgotPasswordCommand(
+                        request.email()
+                )
+        );
+
+        return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<Void> resetPassword(
+            @Valid @RequestBody ResetPasswordRequest request
+    ) {
+        resetPasswordService.resetPassword(
+                new ResetPasswordCommand(
+                        request.token(),
+                        request.newPassword()
+                )
+        );
+
+        return ResponseEntity.noContent().build();
     }
 
 }

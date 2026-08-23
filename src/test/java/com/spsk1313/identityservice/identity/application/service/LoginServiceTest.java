@@ -43,7 +43,7 @@ class LoginServiceTest {
     private RefreshTokenRepository refreshTokenRepository;
 
     @Mock
-    private RefreshTokenGenerator refreshTokenGenerator;
+    private RawTokenGenerator rawTokenGenerator;
 
     @Mock
     private TokenHasher tokenHasher;
@@ -90,7 +90,7 @@ class LoginServiceTest {
                 passwordHasher,
                 authSessionRepository,
                 refreshTokenRepository,
-                refreshTokenGenerator,
+                rawTokenGenerator,
                 tokenHasher,
                 accessTokenIssuer,
                 clock
@@ -119,7 +119,7 @@ class LoginServiceTest {
         when(authSessionRepository.save(any(AuthSession.class)))
                 .thenReturn(persistedSession);
 
-        when(refreshTokenGenerator.generate())
+        when(rawTokenGenerator.generate())
                 .thenReturn(RAW_REFRESH_TOKEN);
 
         when(tokenHasher.hash(RAW_REFRESH_TOKEN))
@@ -155,7 +155,7 @@ class LoginServiceTest {
         assertNull(session.getRevokedAt());
         assertNull(session.getLastUsedAt());
 
-        verify(refreshTokenGenerator).generate();
+        verify(rawTokenGenerator).generate();
 
         verify(tokenHasher)
                 .hash(RAW_REFRESH_TOKEN);
@@ -311,7 +311,7 @@ class LoginServiceTest {
         verifyNoInteractions(
                 authSessionRepository,
                 refreshTokenRepository,
-                refreshTokenGenerator,
+                rawTokenGenerator,
                 tokenHasher,
                 accessTokenIssuer
         );

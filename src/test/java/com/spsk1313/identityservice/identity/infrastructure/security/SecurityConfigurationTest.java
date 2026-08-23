@@ -64,6 +64,12 @@ class SecurityConfigurationTest {
     private LogoutAllService logoutAllService;
 
     @MockitoBean
+    private ForgotPasswordService forgotPasswordService;
+
+    @MockitoBean
+    private ResetPasswordService resetPasswordService;
+
+    @MockitoBean
     private JwtDecoder jwtDecoder;
 
 

@@ -24,7 +24,7 @@ public class LoginService {
     private final PasswordHasher passwordHasher;
     private final AuthSessionRepository authSessionRepository;
     private final RefreshTokenRepository refreshTokenRepository;
-    private final RefreshTokenGenerator refreshTokenGenerator;
+    private final RawTokenGenerator rawTokenGenerator;
     private final TokenHasher tokenHasher;
     private final AccessTokenIssuer accessTokenIssuer;
     private final Clock clock;
@@ -36,7 +36,7 @@ public class LoginService {
             PasswordHasher passwordHasher,
             AuthSessionRepository authSessionRepository,
             RefreshTokenRepository refreshTokenRepository,
-            RefreshTokenGenerator refreshTokenGenerator,
+            RawTokenGenerator rawTokenGenerator,
             TokenHasher tokenHasher,
             AccessTokenIssuer accessTokenIssuer,
             Clock clock
@@ -45,7 +45,7 @@ public class LoginService {
         this.passwordHasher = passwordHasher;
         this.authSessionRepository = authSessionRepository;
         this.refreshTokenRepository = refreshTokenRepository;
-        this.refreshTokenGenerator = refreshTokenGenerator;
+        this.rawTokenGenerator = rawTokenGenerator;
         this.tokenHasher = tokenHasher;
         this.accessTokenIssuer = accessTokenIssuer;
         this.clock = clock;
@@ -71,7 +71,7 @@ public class LoginService {
 
         session = authSessionRepository.save(session);
 
-        String rawRefreshToken = refreshTokenGenerator.generate();
+        String rawRefreshToken = rawTokenGenerator.generate();
 
         String refreshTokenHash = tokenHasher.hash(rawRefreshToken);
 
