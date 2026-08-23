@@ -8,6 +8,7 @@ import com.spsk1313.identityservice.identity.infrastructure.persistence.mapper.A
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -71,5 +72,14 @@ public class JpaAuthSessionRepositoryAdapter implements AuthSessionRepository {
         return sessionRepository
                 .findById(id)
                 .map(mapper::toDomain);
+    }
+
+    @Override
+    public List<AuthSession> findByUserId(Long userId) {
+        return sessionRepository
+                .findByUserId(userId)
+                .stream()
+                .map(mapper::toDomain)
+                .toList();
     }
 }

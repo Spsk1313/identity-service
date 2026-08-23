@@ -19,6 +19,8 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -33,6 +35,7 @@ public class AuthController {
     private final RefreshTokenCookieFactory refreshTokenCookieFactory;
     private final RefreshAccessTokenService refreshAccessTokenService;
     private final LogoutService logoutService;
+    private final LogoutAllService logoutAllService;
 
     public AuthController(
             RegisterUserService registerUserService,
@@ -40,7 +43,8 @@ public class AuthController {
             LoginService loginService,
             RefreshTokenCookieFactory refreshTokenCookieFactory,
             RefreshAccessTokenService refreshAccessTokenService,
-            LogoutService logoutService
+            LogoutService logoutService,
+            LogoutAllService logoutAllService
     ) {
         this.registerUserService = registerUserService;
         this.verifyEmailService = verifyEmailService;
@@ -48,6 +52,7 @@ public class AuthController {
         this.refreshTokenCookieFactory = refreshTokenCookieFactory;
         this.refreshAccessTokenService = refreshAccessTokenService;
         this.logoutService = logoutService;
+        this.logoutAllService = logoutAllService;
     }
 
     @PostMapping("/register")
@@ -135,6 +140,33 @@ public class AuthController {
             ) String refreshToken
     ) {
         logoutService.logout(refreshToken);
+
+        ResponseCookie clearedCookie =
+                refreshTokenCookieFactory.clear();
+
+        return ResponseEntity
+                .noContent()
+                .header(
+                        HttpHeaders.SET_COOKIE,
+                        clearedCookie.toString()
+                )
+                .build();
+    }
+
+    @PostMapping("/logout-all")
+    public ResponseEntity<Void> logoutAll(
+            @AuthenticationPrincipal Jwt jwt
+    ) {
+
+        String subject = jwt.getSubject();
+
+        if(subject == null || subject.isBlank()) {
+            throw new IllegalStateException("Authenticated JWT is missing subject");
+        }
+
+        Long userId = Long.valueOf(subject);
+
+        logoutAllService.logoutAll(userId);
 
         ResponseCookie clearedCookie =
                 refreshTokenCookieFactory.clear();
