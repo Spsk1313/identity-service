@@ -6,12 +6,7 @@ import com.nimbusds.jose.jwk.source.ImmutableJWKSet;
 import com.nimbusds.jose.proc.SecurityContext;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.security.oauth2.jwt.Jwt;
-import org.springframework.security.oauth2.jwt.JwtDecoder;
-import org.springframework.security.oauth2.jwt.JwtException;
-import org.springframework.security.oauth2.jwt.JwtEncoder;
-import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
-import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
+import org.springframework.security.oauth2.jwt.*;
 
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
@@ -56,12 +51,21 @@ class JwtAccessTokenIssuerTest {
         JwtEncoder jwtEncoder =
                 createEncoder(publicKey, privateKey);
 
-        jwtDecoder = NimbusJwtDecoder
+        Clock clock =
+                Clock.fixed(NOW, ZoneOffset.UTC);
+
+        NimbusJwtDecoder decoder = NimbusJwtDecoder
                 .withPublicKey(publicKey)
                 .build();
 
-        Clock clock =
-                Clock.fixed(NOW, ZoneOffset.UTC);
+        JwtTimestampValidator timestampValidator =
+                new JwtTimestampValidator();
+
+        timestampValidator.setClock(clock);
+
+        decoder.setJwtValidator(timestampValidator);
+
+        jwtDecoder = decoder;
 
         JwtProperties properties = new JwtProperties(
                 ISSUER,
