@@ -1,6 +1,6 @@
 package com.spsk1313.identityservice.identity.application.port.out;
 
-import com.spsk1313.identityservice.identity.domain.auth.PasswordResetToken;
+import com.spsk1313.identityservice.identity.domain.authentication.PasswordResetToken;
 
 import java.time.Instant;
 import java.util.Optional;

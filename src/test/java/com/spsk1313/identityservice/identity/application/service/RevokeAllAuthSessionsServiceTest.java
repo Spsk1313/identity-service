@@ -1,7 +1,7 @@
 package com.spsk1313.identityservice.identity.application.service;
 
 import com.spsk1313.identityservice.identity.application.port.out.AuthSessionRepository;
-import com.spsk1313.identityservice.identity.domain.auth.AuthSession;
+import com.spsk1313.identityservice.identity.domain.authentication.AuthSession;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

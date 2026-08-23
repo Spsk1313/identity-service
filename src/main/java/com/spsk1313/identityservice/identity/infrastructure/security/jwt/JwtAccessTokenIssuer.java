@@ -1,6 +1,7 @@
 package com.spsk1313.identityservice.identity.infrastructure.security.jwt;
 
 import com.spsk1313.identityservice.identity.application.port.out.AccessTokenIssuer;
+import com.spsk1313.identityservice.identity.domain.authorization.UserAuthorization;
 import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
 import org.springframework.security.oauth2.jwt.JwsHeader;
 import org.springframework.security.oauth2.jwt.JwtClaimsSet;
@@ -27,7 +28,7 @@ public class JwtAccessTokenIssuer implements AccessTokenIssuer {
 
 
     @Override
-    public String issue(Long userId, String email) {
+    public String issue(Long userId, String email, UserAuthorization authorization) {
         Instant now = clock.instant();
         Instant expiresAt = now.plus(properties.accessTokenTtl());
 
@@ -38,6 +39,14 @@ public class JwtAccessTokenIssuer implements AccessTokenIssuer {
                 .expiresAt(expiresAt)
                 .id(UUID.randomUUID().toString())
                 .claim("email", email)
+                .claim("roles", authorization.getRoles()
+                        .stream()
+                        .map(Enum::name)
+                        .toList())
+                .claim("permissions", authorization.getPermissions()
+                        .stream()
+                        .map(Enum::name)
+                        .toList())
                 .build();
 
         JwsHeader header = JwsHeader

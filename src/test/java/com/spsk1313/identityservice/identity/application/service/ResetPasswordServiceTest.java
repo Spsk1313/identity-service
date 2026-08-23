@@ -7,7 +7,7 @@ import com.spsk1313.identityservice.identity.application.port.out.PasswordResetT
 import com.spsk1313.identityservice.identity.application.port.out.TokenHasher;
 import com.spsk1313.identityservice.identity.application.port.out.UserRepository;
 import com.spsk1313.identityservice.identity.domain.User;
-import com.spsk1313.identityservice.identity.domain.auth.PasswordResetToken;
+import com.spsk1313.identityservice.identity.domain.authentication.PasswordResetToken;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

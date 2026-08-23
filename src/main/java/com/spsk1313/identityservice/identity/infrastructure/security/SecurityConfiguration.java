@@ -1,23 +1,27 @@
 package com.spsk1313.identityservice.identity.infrastructure.security;
 
+import com.spsk1313.identityservice.identity.infrastructure.security.jwt.JwtAuthoritiesConverter;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.Customizer;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
 
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity
 public class SecurityConfiguration {
 
    @Bean
-    SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception{
+    SecurityFilterChain securityFilterChain(HttpSecurity http, JwtAuthenticationConverter jwtAuthenticationConverter) throws Exception{
        http
                .authorizeHttpRequests(auth -> auth
                        .requestMatchers(
@@ -47,7 +51,12 @@ public class SecurityConfiguration {
                        PathPatternRequestMatcher.pathPattern(HttpMethod.POST, "/api/auth/reset-password")
                ))
                .oauth2ResourceServer(oauth2 ->
-                       oauth2.jwt(Customizer.withDefaults()))
+                       oauth2.jwt(jwt ->
+                               jwt.jwtAuthenticationConverter(
+                                       jwtAuthenticationConverter
+                               )
+                       )
+               )
                .exceptionHandling(exceptions ->
                        exceptions.authenticationEntryPoint(
                                ((request, response, authException) -> {
@@ -56,5 +65,14 @@ public class SecurityConfiguration {
                        ));
 
        return http.build();
+   }
+
+   @Bean
+    public JwtAuthenticationConverter jwtAuthenticationConverter(JwtAuthoritiesConverter authoritiesConverter) {
+       JwtAuthenticationConverter converter = new JwtAuthenticationConverter();
+
+       converter.setJwtGrantedAuthoritiesConverter(authoritiesConverter);
+
+       return converter;
    }
 }

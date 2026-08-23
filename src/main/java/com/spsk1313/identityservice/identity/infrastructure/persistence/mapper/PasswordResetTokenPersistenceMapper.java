@@ -1,6 +1,6 @@
 package com.spsk1313.identityservice.identity.infrastructure.persistence.mapper;
 
-import com.spsk1313.identityservice.identity.domain.auth.PasswordResetToken;
+import com.spsk1313.identityservice.identity.domain.authentication.PasswordResetToken;
 import com.spsk1313.identityservice.identity.infrastructure.persistence.entity.PasswordResetTokenJpaEntity;
 import org.springframework.stereotype.Component;
 

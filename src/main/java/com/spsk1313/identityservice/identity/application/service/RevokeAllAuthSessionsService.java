@@ -1,7 +1,7 @@
 package com.spsk1313.identityservice.identity.application.service;
 
 import com.spsk1313.identityservice.identity.application.port.out.AuthSessionRepository;
-import com.spsk1313.identityservice.identity.domain.auth.AuthSession;
+import com.spsk1313.identityservice.identity.domain.authentication.AuthSession;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 

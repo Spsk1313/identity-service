@@ -1,6 +1,6 @@
 package com.spsk1313.identityservice.identity.application.port.out;
 
-import com.spsk1313.identityservice.identity.domain.auth.AuthSession;
+import com.spsk1313.identityservice.identity.domain.authentication.AuthSession;
 
 import java.util.List;
 import java.util.Optional;

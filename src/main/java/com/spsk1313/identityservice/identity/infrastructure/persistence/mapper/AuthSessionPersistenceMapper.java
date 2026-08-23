@@ -1,6 +1,6 @@
 package com.spsk1313.identityservice.identity.infrastructure.persistence.mapper;
 
-import com.spsk1313.identityservice.identity.domain.auth.AuthSession;
+import com.spsk1313.identityservice.identity.domain.authentication.AuthSession;
 import com.spsk1313.identityservice.identity.infrastructure.persistence.entity.AuthSessionJpaEntity;
 import com.spsk1313.identityservice.identity.infrastructure.persistence.entity.UserJpaEntity;
 import org.springframework.stereotype.Component;
