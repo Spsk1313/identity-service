@@ -25,7 +25,8 @@ public class SecurityConfiguration {
                                "/api/auth/register",
                                "/api/auth/verify-email",
                                "/api/auth/login",
-                               "/api/auth/refresh"
+                               "/api/auth/refresh",
+                               "/api/auth/logout"
                        )
                        .permitAll()
                        .anyRequest()
@@ -38,8 +39,9 @@ public class SecurityConfiguration {
                        PathPatternRequestMatcher.pathPattern(HttpMethod.POST, "/api/auth/register"),
                        PathPatternRequestMatcher.pathPattern(HttpMethod.POST, "/api/auth/verify-email"),
                        PathPatternRequestMatcher.pathPattern(HttpMethod.POST, "/api/auth/login"),
-                       PathPatternRequestMatcher.pathPattern(HttpMethod.POST, "/api/auth/refresh")
-                       ))
+                       PathPatternRequestMatcher.pathPattern(HttpMethod.POST, "/api/auth/refresh"),
+                       PathPatternRequestMatcher.pathPattern(HttpMethod.POST, "/api/auth/logout")
+               ))
                .oauth2ResourceServer(oauth2 ->
                        oauth2.jwt(Customizer.withDefaults()))
                .exceptionHandling(exceptions ->

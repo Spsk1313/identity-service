@@ -21,4 +21,15 @@ public class RefreshTokenCookieFactory {
                 .build();
     }
 
+    public ResponseCookie clear() {
+        return ResponseCookie
+                .from(COOKIE_NAME, "")
+                .httpOnly(true)
+                .secure(false)
+                .sameSite("Lax")
+                .path("/api/auth")
+                .maxAge(Duration.ZERO)
+                .build();
+    }
+
 }

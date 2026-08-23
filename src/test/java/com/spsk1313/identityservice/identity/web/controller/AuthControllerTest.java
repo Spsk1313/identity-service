@@ -8,10 +8,7 @@ import com.spsk1313.identityservice.identity.application.exception.InvalidRefres
 import com.spsk1313.identityservice.identity.application.exception.VerificationTokenNotFoundException;
 import com.spsk1313.identityservice.identity.application.result.LoginResult;
 import com.spsk1313.identityservice.identity.application.result.RegisterUserResult;
-import com.spsk1313.identityservice.identity.application.service.LoginService;
-import com.spsk1313.identityservice.identity.application.service.RefreshAccessTokenService;
-import com.spsk1313.identityservice.identity.application.service.RegisterUserService;
-import com.spsk1313.identityservice.identity.application.service.VerifyEmailService;
+import com.spsk1313.identityservice.identity.application.service.*;
 import com.spsk1313.identityservice.identity.domain.AccountStatus;
 import com.spsk1313.identityservice.identity.web.cookie.RefreshTokenCookieFactory;
 import com.spsk1313.identityservice.identity.web.error.GlobalExceptionHandler;
@@ -59,6 +56,9 @@ class AuthControllerTest {
 
     @Mock
     private RefreshAccessTokenService refreshAccessTokenService;
+
+    @Mock
+    private LogoutService logoutService;
 
     @InjectMocks
     private AuthController authController;
@@ -406,5 +406,97 @@ class AuthControllerTest {
 
         verifyNoInteractions(refreshAccessTokenService);
         verifyNoInteractions(refreshTokenCookieFactory);
+    }
+
+    @Test
+    void shouldLogoutAndClearRefreshTokenCookie() throws Exception {
+        String refreshToken = "refresh-token-r1";
+
+        ResponseCookie clearedCookie = ResponseCookie
+                .from("refresh_token", "")
+                .httpOnly(true)
+                .sameSite("Lax")
+                .path("/api/auth")
+                .maxAge(Duration.ZERO)
+                .build();
+
+        when(refreshTokenCookieFactory.clear())
+                .thenReturn(clearedCookie);
+
+        mockMvc.perform(
+                        post("/api/auth/logout")
+                                .cookie(
+                                        new Cookie(
+                                                "refresh_token",
+                                                refreshToken
+                                        )
+                                )
+                )
+                .andExpect(status().isNoContent())
+                .andExpect(header().string(
+                        HttpHeaders.SET_COOKIE,
+                        containsString("refresh_token=")
+                ))
+                .andExpect(header().string(
+                        HttpHeaders.SET_COOKIE,
+                        containsString("Max-Age=0")
+                ))
+                .andExpect(header().string(
+                        HttpHeaders.SET_COOKIE,
+                        containsString("HttpOnly")
+                ))
+                .andExpect(header().string(
+                        HttpHeaders.SET_COOKIE,
+                        containsString("Path=/api/auth")
+                ));
+
+        verify(logoutService).logout(refreshToken);
+        verify(refreshTokenCookieFactory).clear();
+    }
+
+    @Test
+    void shouldLogoutSuccessfullyWhenRefreshTokenCookieIsMissing() throws Exception {
+        ResponseCookie clearedCookie = ResponseCookie
+                .from("refresh_token", "")
+                .httpOnly(true)
+                .sameSite("Lax")
+                .path("/api/auth")
+                .maxAge(Duration.ZERO)
+                .build();
+
+        when(refreshTokenCookieFactory.clear())
+                .thenReturn(clearedCookie);
+
+        mockMvc.perform(
+                        post("/api/auth/logout")
+                )
+                .andExpect(status().isNoContent())
+                .andExpect(header().string(
+                        HttpHeaders.SET_COOKIE,
+                        containsString("Max-Age=0")
+                ));
+
+        verify(logoutService).logout(null);
+        verify(refreshTokenCookieFactory).clear();
+    }
+
+    @Test
+    void shouldAllowAnonymousUserToAccessLogoutEndpoint() throws Exception {
+        ResponseCookie clearedCookie = ResponseCookie
+                .from("refresh_token", "")
+                .httpOnly(true)
+                .path("/api/auth")
+                .maxAge(Duration.ZERO)
+                .build();
+
+        when(refreshTokenCookieFactory.clear())
+                .thenReturn(clearedCookie);
+
+        mockMvc.perform(
+                        post("/api/auth/logout")
+                )
+                .andExpect(status().isNoContent());
+
+        verify(logoutService).logout(null);
     }
 }
