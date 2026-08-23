@@ -1,13 +1,21 @@
 package com.spsk1313.identityservice.identity.web.controller;
 
+import com.spsk1313.identityservice.identity.application.command.LoginCommand;
 import com.spsk1313.identityservice.identity.application.command.RegisterUserCommand;
+import com.spsk1313.identityservice.identity.application.result.LoginResult;
 import com.spsk1313.identityservice.identity.application.result.RegisterUserResult;
+import com.spsk1313.identityservice.identity.application.service.LoginService;
 import com.spsk1313.identityservice.identity.application.service.RegisterUserService;
 import com.spsk1313.identityservice.identity.application.service.VerifyEmailService;
+import com.spsk1313.identityservice.identity.web.cookie.RefreshTokenCookieFactory;
+import com.spsk1313.identityservice.identity.web.request.LoginRequest;
 import com.spsk1313.identityservice.identity.web.request.RegisterUserRequest;
+import com.spsk1313.identityservice.identity.web.response.LoginResponse;
 import com.spsk1313.identityservice.identity.web.response.RegisterUserResponse;
 import jakarta.validation.Valid;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -19,12 +27,19 @@ public class AuthController {
 
     private final RegisterUserService registerUserService;
     private final VerifyEmailService verifyEmailService;
+    private final LoginService loginService;
+    private final RefreshTokenCookieFactory refreshTokenCookieFactory;
 
     public AuthController(
             RegisterUserService registerUserService,
-            VerifyEmailService verifyEmailService) {
+            VerifyEmailService verifyEmailService,
+            LoginService loginService,
+            RefreshTokenCookieFactory refreshTokenCookieFactory
+    ) {
         this.registerUserService = registerUserService;
         this.verifyEmailService = verifyEmailService;
+        this.loginService = loginService;
+        this.refreshTokenCookieFactory = refreshTokenCookieFactory;
     }
 
     @PostMapping("/register")
@@ -41,6 +56,35 @@ public class AuthController {
     ) {
         verifyEmailService.verify(token);
         return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<LoginResponse> login(
+            @Valid @RequestBody LoginRequest request,
+            @RequestHeader(value = "User-Agent", required = false) String userAgent
+            ) {
+        LoginCommand command = new LoginCommand(
+                request.email(),
+                request.password(),
+                userAgent
+        );
+
+        LoginResult result = loginService.login(command);
+
+        LoginResponse response = new LoginResponse(
+                result.userId(),
+                result.email(),
+                result.accessToken()
+        );
+
+        ResponseCookie refreshCookie = refreshTokenCookieFactory.create(result.refreshToken());
+
+        return ResponseEntity.ok()
+                .header(
+                        HttpHeaders.SET_COOKIE,
+                        refreshCookie.toString()
+                )
+                .body(response);
     }
 
 }

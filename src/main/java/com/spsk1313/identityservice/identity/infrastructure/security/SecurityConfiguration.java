@@ -4,6 +4,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -22,7 +23,8 @@ public class SecurityConfiguration {
                        .requestMatchers(
                                HttpMethod.POST,
                                "/api/auth/register",
-                               "/api/auth/verify-email"
+                               "/api/auth/verify-email",
+                               "/api/auth/login"
                        )
                        .permitAll()
                        .anyRequest()
@@ -33,7 +35,10 @@ public class SecurityConfiguration {
                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                .csrf(csrf -> csrf.ignoringRequestMatchers(
                        PathPatternRequestMatcher.pathPattern(HttpMethod.POST, "/api/auth/register"),
-                       PathPatternRequestMatcher.pathPattern(HttpMethod.POST, "/api/auth/verify-email")))
+                       PathPatternRequestMatcher.pathPattern(HttpMethod.POST, "/api/auth/verify-email"),
+                       PathPatternRequestMatcher.pathPattern(HttpMethod.POST, "/api/auth/login")))
+               .oauth2ResourceServer(oauth2 ->
+                       oauth2.jwt(Customizer.withDefaults()))
                .exceptionHandling(exceptions ->
                        exceptions.authenticationEntryPoint(
                                ((request, response, authException) -> {

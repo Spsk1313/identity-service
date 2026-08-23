@@ -12,7 +12,13 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 @SpringBootTest(properties = {
         "spring.mail.host=localhost",
         "spring.mail.port=1025",
-        "app.verification.base-url=http://localhost:8080"
+
+        "app.verification.base-url=http://localhost:8080",
+
+        "app.jwt.issuer=http://localhost:8080",
+        "app.jwt.access-token-ttl=15m",
+        "app.jwt.private-key=file:keys/private.pem",
+        "app.jwt.public-key=file:keys/public.pem"
 })
 class IdentityServiceApplicationTests {
 
