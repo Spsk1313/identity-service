@@ -1,16 +1,21 @@
 package com.spsk1313.identityservice.identity.web.controller;
 
 import com.spsk1313.identityservice.identity.application.command.LoginCommand;
+import com.spsk1313.identityservice.identity.application.command.RefreshAccessTokenCommand;
 import com.spsk1313.identityservice.identity.application.command.RegisterUserCommand;
+import com.spsk1313.identityservice.identity.application.exception.InvalidRefreshTokenException;
 import com.spsk1313.identityservice.identity.application.result.LoginResult;
+import com.spsk1313.identityservice.identity.application.result.RefreshAccessTokenResult;
 import com.spsk1313.identityservice.identity.application.result.RegisterUserResult;
 import com.spsk1313.identityservice.identity.application.service.LoginService;
+import com.spsk1313.identityservice.identity.application.service.RefreshAccessTokenService;
 import com.spsk1313.identityservice.identity.application.service.RegisterUserService;
 import com.spsk1313.identityservice.identity.application.service.VerifyEmailService;
 import com.spsk1313.identityservice.identity.web.cookie.RefreshTokenCookieFactory;
 import com.spsk1313.identityservice.identity.web.request.LoginRequest;
 import com.spsk1313.identityservice.identity.web.request.RegisterUserRequest;
 import com.spsk1313.identityservice.identity.web.response.LoginResponse;
+import com.spsk1313.identityservice.identity.web.response.RefreshAccessTokenResponse;
 import com.spsk1313.identityservice.identity.web.response.RegisterUserResponse;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpHeaders;
@@ -29,17 +34,20 @@ public class AuthController {
     private final VerifyEmailService verifyEmailService;
     private final LoginService loginService;
     private final RefreshTokenCookieFactory refreshTokenCookieFactory;
+    private final RefreshAccessTokenService refreshAccessTokenService;
 
     public AuthController(
             RegisterUserService registerUserService,
             VerifyEmailService verifyEmailService,
             LoginService loginService,
-            RefreshTokenCookieFactory refreshTokenCookieFactory
+            RefreshTokenCookieFactory refreshTokenCookieFactory,
+            RefreshAccessTokenService refreshAccessTokenService
     ) {
         this.registerUserService = registerUserService;
         this.verifyEmailService = verifyEmailService;
         this.loginService = loginService;
         this.refreshTokenCookieFactory = refreshTokenCookieFactory;
+        this.refreshAccessTokenService = refreshAccessTokenService;
     }
 
     @PostMapping("/register")
@@ -85,6 +93,38 @@ public class AuthController {
                         refreshCookie.toString()
                 )
                 .body(response);
+    }
+
+    @PostMapping("/refresh")
+    public ResponseEntity<RefreshAccessTokenResponse> refresh(
+            @CookieValue(name = "refresh_token", required = false) String refreshToken
+    ) {
+
+        if (refreshToken == null || refreshToken.isBlank()) {
+            throw new InvalidRefreshTokenException();
+        }
+
+        RefreshAccessTokenResult result =
+                refreshAccessTokenService.refresh(
+                        new RefreshAccessTokenCommand(refreshToken)
+                );
+
+        ResponseCookie refreshTokenCookie =
+                refreshTokenCookieFactory.create(
+                        result.refreshToken()
+                );
+
+        return ResponseEntity
+                .ok()
+                .header(
+                        HttpHeaders.SET_COOKIE,
+                        refreshTokenCookie.toString()
+                )
+                .body(
+                        new RefreshAccessTokenResponse(
+                                result.accessToken()
+                        )
+                );
     }
 
 }

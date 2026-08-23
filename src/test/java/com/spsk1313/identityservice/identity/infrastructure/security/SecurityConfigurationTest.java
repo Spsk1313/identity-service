@@ -5,6 +5,7 @@ import com.spsk1313.identityservice.identity.application.command.RegisterUserCom
 import com.spsk1313.identityservice.identity.application.result.LoginResult;
 import com.spsk1313.identityservice.identity.application.result.RegisterUserResult;
 import com.spsk1313.identityservice.identity.application.service.LoginService;
+import com.spsk1313.identityservice.identity.application.service.RefreshAccessTokenService;
 import com.spsk1313.identityservice.identity.application.service.RegisterUserService;
 import com.spsk1313.identityservice.identity.application.service.VerifyEmailService;
 import com.spsk1313.identityservice.identity.domain.AccountStatus;
@@ -50,6 +51,9 @@ class SecurityConfigurationTest {
 
     @MockitoBean
     private RefreshTokenCookieFactory refreshTokenCookieFactory;
+
+    @MockitoBean
+    private RefreshAccessTokenService refreshAccessTokenService;
 
     @MockitoBean
     private JwtDecoder jwtDecoder;

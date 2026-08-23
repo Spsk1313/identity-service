@@ -1,9 +1,6 @@
 package com.spsk1313.identityservice.identity.web.error;
 
-import com.spsk1313.identityservice.identity.application.exception.DuplicateEmailException;
-import com.spsk1313.identityservice.identity.application.exception.InvalidPasswordException;
-import com.spsk1313.identityservice.identity.application.exception.UserNotFoundException;
-import com.spsk1313.identityservice.identity.application.exception.VerificationTokenNotFoundException;
+import com.spsk1313.identityservice.identity.application.exception.*;
 import com.spsk1313.identityservice.identity.domain.exception.InvalidEmailException;
 import com.spsk1313.identityservice.identity.domain.verification.VerificationTokenNotUsableException;
 import org.springframework.http.HttpStatus;
@@ -131,5 +128,22 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(response);
+    }
+
+    @ExceptionHandler(InvalidRefreshTokenException.class)
+    public ResponseEntity<ApiErrorResponse> handleInvalidRefreshToken(
+            InvalidRefreshTokenException ex
+    ) {
+        return ResponseEntity
+                .status(HttpStatus.UNAUTHORIZED)
+                .body(
+                        new ApiErrorResponse(
+                                Instant.now(),
+                                HttpStatus.UNAUTHORIZED.value(),
+                                HttpStatus.UNAUTHORIZED.getReasonPhrase(),
+                                ex.getMessage(),
+                                Map.of()
+                        )
+                );
     }
 }

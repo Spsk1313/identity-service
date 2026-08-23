@@ -4,10 +4,12 @@ import com.spsk1313.identityservice.identity.application.command.LoginCommand;
 import com.spsk1313.identityservice.identity.application.command.RegisterUserCommand;
 import com.spsk1313.identityservice.identity.application.exception.DuplicateEmailException;
 import com.spsk1313.identityservice.identity.application.exception.InvalidPasswordException;
+import com.spsk1313.identityservice.identity.application.exception.InvalidRefreshTokenException;
 import com.spsk1313.identityservice.identity.application.exception.VerificationTokenNotFoundException;
 import com.spsk1313.identityservice.identity.application.result.LoginResult;
 import com.spsk1313.identityservice.identity.application.result.RegisterUserResult;
 import com.spsk1313.identityservice.identity.application.service.LoginService;
+import com.spsk1313.identityservice.identity.application.service.RefreshAccessTokenService;
 import com.spsk1313.identityservice.identity.application.service.RegisterUserService;
 import com.spsk1313.identityservice.identity.application.service.VerifyEmailService;
 import com.spsk1313.identityservice.identity.domain.AccountStatus;
@@ -23,6 +25,15 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseCookie;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+
+import com.spsk1313.identityservice.identity.application.command.RefreshAccessTokenCommand;
+import com.spsk1313.identityservice.identity.application.result.RefreshAccessTokenResult;
+
+import jakarta.servlet.http.Cookie;
+
+import org.springframework.http.HttpHeaders;
+
+import static org.hamcrest.Matchers.containsString;
 
 import java.time.Duration;
 
@@ -45,6 +56,9 @@ class AuthControllerTest {
 
     @Mock
     private RefreshTokenCookieFactory refreshTokenCookieFactory;
+
+    @Mock
+    private RefreshAccessTokenService refreshAccessTokenService;
 
     @InjectMocks
     private AuthController authController;
@@ -287,6 +301,110 @@ class AuthControllerTest {
                 .andExpect(jsonPath("$.fieldErrors.password").exists());
 
         verifyNoInteractions(loginService);
+        verifyNoInteractions(refreshTokenCookieFactory);
+    }
+
+    @Test
+    void shouldRefreshAccessTokenAndRotateRefreshTokenCookie() throws Exception {
+        String currentRefreshToken = "refresh-token-r1";
+        String newAccessToken = "access-token-a2";
+        String newRefreshToken = "refresh-token-r2";
+
+        when(refreshAccessTokenService.refresh(
+                new RefreshAccessTokenCommand(currentRefreshToken)
+        )).thenReturn(
+                new RefreshAccessTokenResult(
+                        newAccessToken,
+                        newRefreshToken
+                )
+        );
+
+        ResponseCookie cookie = ResponseCookie
+                .from("refresh_token", newRefreshToken)
+                .httpOnly(true)
+                .sameSite("Lax")
+                .path("/api/auth")
+                .maxAge(Duration.ofDays(30))
+                .build();
+
+        when(refreshTokenCookieFactory.create(newRefreshToken))
+                .thenReturn(cookie);
+
+        mockMvc.perform(
+                        post("/api/auth/refresh")
+                                .cookie(
+                                        new Cookie(
+                                                "refresh_token",
+                                                currentRefreshToken
+                                        )
+                                )
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.accessToken")
+                        .value(newAccessToken))
+                .andExpect(jsonPath("$.refreshToken")
+                        .doesNotExist())
+                .andExpect(header().string(
+                        HttpHeaders.SET_COOKIE,
+                        containsString(
+                                "refresh_token=" + newRefreshToken
+                        )
+                ))
+                .andExpect(header().string(
+                        HttpHeaders.SET_COOKIE,
+                        containsString("HttpOnly")
+                ))
+                .andExpect(header().string(
+                        HttpHeaders.SET_COOKIE,
+                        containsString("SameSite=Lax")
+                ))
+                .andExpect(header().string(
+                        HttpHeaders.SET_COOKIE,
+                        containsString("Path=/api/auth")
+                ));
+
+        verify(refreshAccessTokenService).refresh(
+                new RefreshAccessTokenCommand(currentRefreshToken)
+        );
+
+        verify(refreshTokenCookieFactory)
+                .create(newRefreshToken);
+    }
+
+    @Test
+    void shouldReturn401WhenRefreshTokenIsInvalid() throws Exception {
+        String refreshToken = "invalid-refresh-token";
+
+        when(refreshAccessTokenService.refresh(
+                new RefreshAccessTokenCommand(refreshToken)
+        )).thenThrow(new InvalidRefreshTokenException());
+
+        mockMvc.perform(
+                        post("/api/auth/refresh")
+                                .cookie(
+                                        new Cookie(
+                                                "refresh_token",
+                                                refreshToken
+                                        )
+                                )
+                )
+                .andExpect(status().isUnauthorized());
+
+        verify(refreshAccessTokenService).refresh(
+                new RefreshAccessTokenCommand(refreshToken)
+        );
+
+        verifyNoInteractions(refreshTokenCookieFactory);
+    }
+
+    @Test
+    void shouldReturn401WhenRefreshTokenCookieIsMissing() throws Exception {
+        mockMvc.perform(
+                        post("/api/auth/refresh")
+                )
+                .andExpect(status().isUnauthorized());
+
+        verifyNoInteractions(refreshAccessTokenService);
         verifyNoInteractions(refreshTokenCookieFactory);
     }
 }
