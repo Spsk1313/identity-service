@@ -26,7 +26,7 @@ public class RefreshAccessTokenService {
     private final UserRepository userRepository;
 
     private final TokenHasher tokenHasher;
-    private final RefreshTokenGenerator tokenGenerator;
+    private final RawTokenGenerator tokenGenerator;
     private final AccessTokenIssuer accessTokenIssuer;
 
     private final Clock clock;
@@ -37,7 +37,7 @@ public class RefreshAccessTokenService {
             AuthSessionRepository authSessionRepository,
             UserRepository userRepository,
             TokenHasher tokenHasher,
-            RefreshTokenGenerator tokenGenerator,
+            RawTokenGenerator tokenGenerator,
             AccessTokenIssuer accessTokenIssuer,
             Clock clock
     ) {

@@ -52,6 +52,11 @@ public class User {
         );
     }
 
+    public void changePassword(String newPasswordHash) {
+        validatePasswordHash(newPasswordHash);
+        this.passwordHash = newPasswordHash;
+    }
+
     public void verifyEmail() {
         if (emailVerified) {
             return;
