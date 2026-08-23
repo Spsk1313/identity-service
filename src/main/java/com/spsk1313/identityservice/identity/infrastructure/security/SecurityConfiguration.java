@@ -22,7 +22,8 @@ public class SecurityConfiguration {
                        .requestMatchers(
                                HttpMethod.POST,
                                "/api/auth/register",
-                               "/api/auth/verify-email"
+                               "/api/auth/verify-email",
+                               "/api/auth/login"
                        )
                        .permitAll()
                        .anyRequest()
@@ -33,7 +34,8 @@ public class SecurityConfiguration {
                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                .csrf(csrf -> csrf.ignoringRequestMatchers(
                        PathPatternRequestMatcher.pathPattern(HttpMethod.POST, "/api/auth/register"),
-                       PathPatternRequestMatcher.pathPattern(HttpMethod.POST, "/api/auth/verify-email")))
+                       PathPatternRequestMatcher.pathPattern(HttpMethod.POST, "/api/auth/verify-email"),
+                       PathPatternRequestMatcher.pathPattern(HttpMethod.POST, "/api/auth/login")))
                .exceptionHandling(exceptions ->
                        exceptions.authenticationEntryPoint(
                                ((request, response, authException) -> {

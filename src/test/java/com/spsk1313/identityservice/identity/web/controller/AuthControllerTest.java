@@ -1,13 +1,17 @@
 package com.spsk1313.identityservice.identity.web.controller;
 
+import com.spsk1313.identityservice.identity.application.command.LoginCommand;
 import com.spsk1313.identityservice.identity.application.command.RegisterUserCommand;
 import com.spsk1313.identityservice.identity.application.exception.DuplicateEmailException;
 import com.spsk1313.identityservice.identity.application.exception.InvalidPasswordException;
 import com.spsk1313.identityservice.identity.application.exception.VerificationTokenNotFoundException;
+import com.spsk1313.identityservice.identity.application.result.LoginResult;
 import com.spsk1313.identityservice.identity.application.result.RegisterUserResult;
+import com.spsk1313.identityservice.identity.application.service.LoginService;
 import com.spsk1313.identityservice.identity.application.service.RegisterUserService;
 import com.spsk1313.identityservice.identity.application.service.VerifyEmailService;
 import com.spsk1313.identityservice.identity.domain.AccountStatus;
+import com.spsk1313.identityservice.identity.web.cookie.RefreshTokenCookieFactory;
 import com.spsk1313.identityservice.identity.web.error.GlobalExceptionHandler;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -16,14 +20,16 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseCookie;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+
+import java.time.Duration;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @ExtendWith(MockitoExtension.class)
 class AuthControllerTest {
@@ -33,6 +39,12 @@ class AuthControllerTest {
 
     @Mock
     private VerifyEmailService verifyEmailService;
+
+    @Mock
+    private LoginService loginService;
+
+    @Mock
+    private RefreshTokenCookieFactory refreshTokenCookieFactory;
 
     @InjectMocks
     private AuthController authController;
@@ -186,5 +198,95 @@ class AuthControllerTest {
                 .andExpect(jsonPath("$.error").value("Bad Request"))
                 .andExpect(jsonPath("$.message")
                         .value("Invalid or expired verification token"));
+    }
+
+    @Test
+    void shouldLoginAndReturnAccessTokenAndRefreshTokenCookie() throws Exception {
+        LoginResult result = new LoginResult(
+                1L,
+                "sahil@example.com",
+                "access-token",
+                "raw-refresh-token"
+        );
+
+        ResponseCookie refreshCookie = ResponseCookie
+                .from("refresh_token", "raw-refresh-token")
+                .httpOnly(true)
+                .secure(false)
+                .sameSite("Lax")
+                .path("/api/auth")
+                .maxAge(Duration.ofDays(30))
+                .build();
+
+        when(loginService.login(any(LoginCommand.class)))
+                .thenReturn(result);
+
+        when(refreshTokenCookieFactory.create("raw-refresh-token"))
+                .thenReturn(refreshCookie);
+
+        String json = """
+            {
+                "email": "sahil@example.com",
+                "password": "correct-horse-battery-staple"
+            }
+            """;
+
+        mockMvc.perform(post("/api/auth/login")
+                        .header("User-Agent", "Test Browser")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json))
+                .andExpect(status().isOk())
+
+                .andExpect(jsonPath("$.userId").value(1))
+                .andExpect(jsonPath("$.email").value("sahil@example.com"))
+                .andExpect(jsonPath("$.accessToken").value("access-token"))
+
+                .andExpect(jsonPath("$.refreshToken").doesNotExist())
+
+                .andExpect(cookie().value(
+                        "refresh_token",
+                        "raw-refresh-token"
+                ))
+                .andExpect(cookie().httpOnly(
+                        "refresh_token",
+                        true
+                ))
+                .andExpect(cookie().path(
+                        "refresh_token",
+                        "/api/auth"
+                ));
+
+        verify(loginService).login(
+                new LoginCommand(
+                        "sahil@example.com",
+                        "correct-horse-battery-staple",
+                        "Test Browser"
+                )
+        );
+
+        verify(refreshTokenCookieFactory)
+                .create("raw-refresh-token");
+    }
+
+    @Test
+    void shouldReturn400WhenLoginRequestValidationFails() throws Exception {
+        String json = """
+            {
+                "email": "",
+                "password": ""
+            }
+            """;
+
+        mockMvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.message").value("Validation failed"))
+                .andExpect(jsonPath("$.fieldErrors.email").exists())
+                .andExpect(jsonPath("$.fieldErrors.password").exists());
+
+        verifyNoInteractions(loginService);
+        verifyNoInteractions(refreshTokenCookieFactory);
     }
 }
