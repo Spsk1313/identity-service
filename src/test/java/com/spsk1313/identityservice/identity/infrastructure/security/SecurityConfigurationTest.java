@@ -17,6 +17,7 @@ import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseCookie;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
@@ -25,6 +26,7 @@ import org.springframework.web.context.WebApplicationContext;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -48,6 +50,9 @@ class SecurityConfigurationTest {
 
     @MockitoBean
     private RefreshTokenCookieFactory refreshTokenCookieFactory;
+
+    @MockitoBean
+    private JwtDecoder jwtDecoder;
 
 
     private MockMvc mockMvc;
@@ -141,5 +146,22 @@ class SecurityConfigurationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json))
                 .andExpect(status().isOk());
+    }
+
+    @Test
+    void shouldAllowAuthenticatedJwtUserToAccessProtectedEndpoint() throws Exception {
+        mockMvc.perform(
+                        get("/api/protected")
+                                .with(jwt()
+                                        .jwt(jwt -> jwt
+                                                .subject("8")
+                                                .claim(
+                                                        "email",
+                                                        "login-test@example.com"
+                                                )
+                                        )
+                                )
+                )
+                .andExpect(status().isNotFound());
     }
 }

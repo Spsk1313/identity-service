@@ -7,10 +7,8 @@ import com.nimbusds.jose.proc.SecurityContext;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.oauth2.jwt.JwtDecoder;
-import org.springframework.security.oauth2.jwt.JwtEncoder;
-import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
-import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
+import org.springframework.security.oauth2.core.OAuth2TokenValidator;
+import org.springframework.security.oauth2.jwt.*;
 
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
@@ -51,10 +49,20 @@ public class JwtConfiguration {
 
     @Bean
     JwtDecoder jwtDecoder(
-            RSAPublicKey publicKey
+            RSAPublicKey publicKey,
+            JwtProperties properties
     ) {
-        return NimbusJwtDecoder
+        NimbusJwtDecoder decoder = NimbusJwtDecoder
                 .withPublicKey(publicKey)
                 .build();
+
+        OAuth2TokenValidator<Jwt> validator =
+                JwtValidators.createDefaultWithIssuer(
+                        properties.issuer()
+                );
+
+        decoder.setJwtValidator(validator);
+
+        return decoder;
     }
 }
