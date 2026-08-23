@@ -7,10 +7,7 @@ import com.spsk1313.identityservice.identity.application.exception.InvalidRefres
 import com.spsk1313.identityservice.identity.application.result.LoginResult;
 import com.spsk1313.identityservice.identity.application.result.RefreshAccessTokenResult;
 import com.spsk1313.identityservice.identity.application.result.RegisterUserResult;
-import com.spsk1313.identityservice.identity.application.service.LoginService;
-import com.spsk1313.identityservice.identity.application.service.RefreshAccessTokenService;
-import com.spsk1313.identityservice.identity.application.service.RegisterUserService;
-import com.spsk1313.identityservice.identity.application.service.VerifyEmailService;
+import com.spsk1313.identityservice.identity.application.service.*;
 import com.spsk1313.identityservice.identity.web.cookie.RefreshTokenCookieFactory;
 import com.spsk1313.identityservice.identity.web.request.LoginRequest;
 import com.spsk1313.identityservice.identity.web.request.RegisterUserRequest;
@@ -35,19 +32,22 @@ public class AuthController {
     private final LoginService loginService;
     private final RefreshTokenCookieFactory refreshTokenCookieFactory;
     private final RefreshAccessTokenService refreshAccessTokenService;
+    private final LogoutService logoutService;
 
     public AuthController(
             RegisterUserService registerUserService,
             VerifyEmailService verifyEmailService,
             LoginService loginService,
             RefreshTokenCookieFactory refreshTokenCookieFactory,
-            RefreshAccessTokenService refreshAccessTokenService
+            RefreshAccessTokenService refreshAccessTokenService,
+            LogoutService logoutService
     ) {
         this.registerUserService = registerUserService;
         this.verifyEmailService = verifyEmailService;
         this.loginService = loginService;
         this.refreshTokenCookieFactory = refreshTokenCookieFactory;
         this.refreshAccessTokenService = refreshAccessTokenService;
+        this.logoutService = logoutService;
     }
 
     @PostMapping("/register")
@@ -125,6 +125,27 @@ public class AuthController {
                                 result.accessToken()
                         )
                 );
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<Void> logout(
+            @CookieValue(
+                    name = "refresh_token",
+                    required = false
+            ) String refreshToken
+    ) {
+        logoutService.logout(refreshToken);
+
+        ResponseCookie clearedCookie =
+                refreshTokenCookieFactory.clear();
+
+        return ResponseEntity
+                .noContent()
+                .header(
+                        HttpHeaders.SET_COOKIE,
+                        clearedCookie.toString()
+                )
+                .build();
     }
 
 }
