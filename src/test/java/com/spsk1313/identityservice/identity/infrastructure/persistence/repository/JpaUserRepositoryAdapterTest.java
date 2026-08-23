@@ -17,6 +17,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.postgresql.PostgreSQLContainer;
 
 import java.time.Instant;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -77,6 +78,20 @@ public class JpaUserRepositoryAdapterTest {
         assertTrue(afterUpdate.isEmailVerified());
         assertNotNull(afterUpdate.getCreatedAt());
         assertEquals(originalCreatedAt, afterUpdate.getCreatedAt());
+    }
+
+    @Test
+    void shouldFindUserByEmail() {
+        User user = User.register(EMAIL, PASSWORD_HASH);
+
+        User persistedUser = userRepository.save(user);
+
+        Optional<User> foundUser = userRepository.findByEmail(EMAIL);
+
+        assertTrue(foundUser.isPresent());
+        assertEquals(persistedUser.getId(), foundUser.get().getId());
+        assertEquals(EMAIL, foundUser.get().getEmail());
+        assertEquals(PASSWORD_HASH, foundUser.get().getPasswordHash());
     }
 
 }

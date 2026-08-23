@@ -4,7 +4,11 @@ import com.spsk1313.identityservice.identity.infrastructure.persistence.entity.U
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.Optional;
+
 @Repository
 public interface SpringDataUserRepository extends JpaRepository<UserJpaEntity, Long> {
     boolean existsByEmail(String email);
+
+    Optional<UserJpaEntity> findByEmail(String email);
 }

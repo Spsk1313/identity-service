@@ -77,4 +77,11 @@ public class JpaUserRepositoryAdapter implements UserRepository {
                 .findById(id)
                 .map(mapper::toDomain);
     }
+
+    @Override
+    public Optional<User> findByEmail(EmailAddress email) {
+        return userRepository
+                .findByEmail(email.value())
+                .map(mapper::toDomain);
+    }
 }
