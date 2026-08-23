@@ -1,11 +1,14 @@
-package com.spsk1313.identityservice.identity.infrastructure.persistence.repository;
+package com.spsk1313.identityservice.identity.infrastructure.persistence.adapter;
 
 import com.spsk1313.identityservice.identity.domain.EmailAddress;
 import com.spsk1313.identityservice.identity.domain.User;
-import com.spsk1313.identityservice.identity.domain.auth.AuthSession;
+import com.spsk1313.identityservice.identity.domain.authentication.AuthSession;
+import com.spsk1313.identityservice.identity.infrastructure.persistence.adapter.JpaAuthSessionRepositoryAdapter;
+import com.spsk1313.identityservice.identity.infrastructure.persistence.adapter.JpaUserRepositoryAdapter;
 import com.spsk1313.identityservice.identity.infrastructure.persistence.entity.AuthSessionJpaEntity;
 import com.spsk1313.identityservice.identity.infrastructure.persistence.mapper.AuthSessionPersistenceMapper;
 import com.spsk1313.identityservice.identity.infrastructure.persistence.mapper.UserPersistenceMapper;
+import com.spsk1313.identityservice.identity.infrastructure.persistence.repository.SpringDataAuthSessionRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;

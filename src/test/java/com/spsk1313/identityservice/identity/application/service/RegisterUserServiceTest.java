@@ -5,12 +5,15 @@ import com.spsk1313.identityservice.identity.application.exception.DuplicateEmai
 import com.spsk1313.identityservice.identity.application.exception.InvalidPasswordException;
 import com.spsk1313.identityservice.identity.application.policy.PasswordPolicy;
 import com.spsk1313.identityservice.identity.application.port.in.EmailVerificationIssuer;
+import com.spsk1313.identityservice.identity.application.port.in.RoleAssigner;
 import com.spsk1313.identityservice.identity.application.port.out.PasswordHasher;
 import com.spsk1313.identityservice.identity.application.port.out.UserRepository;
 import com.spsk1313.identityservice.identity.application.result.RegisterUserResult;
 import com.spsk1313.identityservice.identity.domain.AccountStatus;
 import com.spsk1313.identityservice.identity.domain.EmailAddress;
 import com.spsk1313.identityservice.identity.domain.User;
+import com.spsk1313.identityservice.identity.domain.authorization.RoleName;
+import com.spsk1313.identityservice.identity.domain.authorization.UserRole;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -34,6 +37,9 @@ public class RegisterUserServiceTest {
     @Mock
     EmailVerificationIssuer emailVerificationIssuer;
 
+    @Mock
+    RoleAssigner roleAssigner;
+
     private RegisterUserService registerUserService;
 
     private static final String EMAIL_STR = "sahil@example.com";
@@ -44,7 +50,7 @@ public class RegisterUserServiceTest {
     @BeforeEach
     void setUp() {
         PasswordPolicy passwordPolicy = new PasswordPolicy();
-        registerUserService = new RegisterUserService(userRepository, passwordHasher, passwordPolicy, emailVerificationIssuer);
+        registerUserService = new RegisterUserService(userRepository, passwordHasher, passwordPolicy, emailVerificationIssuer, roleAssigner);
     }
 
     @Test
@@ -80,6 +86,7 @@ public class RegisterUserServiceTest {
         assertEquals(PASSWORD_HASH, capturedUser.getPasswordHash());
 
         verify(emailVerificationIssuer).issue(persistedUser.getId(), persistedUser.getEmail().value());
+        verify(roleAssigner).assign(persistedUser.getId(), RoleName.USER);
     }
 
 
@@ -94,6 +101,7 @@ public class RegisterUserServiceTest {
         verifyNoInteractions(passwordHasher);
         verify(userRepository, never()).save(any(User.class));
         verifyNoInteractions(emailVerificationIssuer);
+        verifyNoInteractions(roleAssigner);
     }
 
     @Test
@@ -105,6 +113,7 @@ public class RegisterUserServiceTest {
         verifyNoInteractions(passwordHasher);
         verifyNoInteractions(userRepository);
         verifyNoInteractions(emailVerificationIssuer);
+        verifyNoInteractions(roleAssigner);
     }
 
 }

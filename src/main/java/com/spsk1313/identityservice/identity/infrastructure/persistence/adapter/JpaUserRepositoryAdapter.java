@@ -1,4 +1,4 @@
-package com.spsk1313.identityservice.identity.infrastructure.persistence.repository;
+package com.spsk1313.identityservice.identity.infrastructure.persistence.adapter;
 
 import com.spsk1313.identityservice.identity.application.exception.DuplicateEmailException;
 import com.spsk1313.identityservice.identity.application.port.out.UserRepository;
@@ -6,6 +6,7 @@ import com.spsk1313.identityservice.identity.domain.EmailAddress;
 import com.spsk1313.identityservice.identity.domain.User;
 import com.spsk1313.identityservice.identity.infrastructure.persistence.entity.UserJpaEntity;
 import com.spsk1313.identityservice.identity.infrastructure.persistence.mapper.UserPersistenceMapper;
+import com.spsk1313.identityservice.identity.infrastructure.persistence.repository.SpringDataUserRepository;
 import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Repository;

@@ -7,8 +7,8 @@ import com.spsk1313.identityservice.identity.application.port.out.RefreshTokenRe
 import com.spsk1313.identityservice.identity.application.port.out.UserRepository;
 import com.spsk1313.identityservice.identity.domain.EmailAddress;
 import com.spsk1313.identityservice.identity.domain.User;
-import com.spsk1313.identityservice.identity.domain.auth.AuthSession;
-import com.spsk1313.identityservice.identity.domain.auth.RefreshToken;
+import com.spsk1313.identityservice.identity.domain.authentication.AuthSession;
+import com.spsk1313.identityservice.identity.domain.authentication.RefreshToken;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;

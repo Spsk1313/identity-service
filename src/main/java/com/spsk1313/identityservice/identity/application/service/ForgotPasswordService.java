@@ -4,7 +4,7 @@ import com.spsk1313.identityservice.identity.application.command.ForgotPasswordC
 import com.spsk1313.identityservice.identity.application.port.out.*;
 import com.spsk1313.identityservice.identity.domain.EmailAddress;
 import com.spsk1313.identityservice.identity.domain.User;
-import com.spsk1313.identityservice.identity.domain.auth.PasswordResetToken;
+import com.spsk1313.identityservice.identity.domain.authentication.PasswordResetToken;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

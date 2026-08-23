@@ -1,6 +1,6 @@
 package com.spsk1313.identityservice.identity.application.port.out;
 
-import com.spsk1313.identityservice.identity.domain.auth.RefreshToken;
+import com.spsk1313.identityservice.identity.domain.authentication.RefreshToken;
 
 import java.util.Optional;
 

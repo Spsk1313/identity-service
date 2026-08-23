@@ -1,69 +1,65 @@
-package com.spsk1313.identityservice.identity.domain.auth;
+package com.spsk1313.identityservice.identity.domain.authentication;
 
 import java.time.Instant;
 
-public class PasswordResetToken {
+public class RefreshToken {
 
     private Long id;
-    private Long userId;
+    private Long sessionId;
     private String tokenHash;
     private Instant expiresAt;
     private Instant usedAt;
 
-    private PasswordResetToken(
+    private RefreshToken(
             Long id,
-            Long userId,
+            Long sessionId,
             String tokenHash,
             Instant expiresAt,
             Instant usedAt
     ) {
-        if (userId == null) {
-            throw new IllegalArgumentException("User id cannot be null");
+        if (sessionId == null) {
+            throw new IllegalArgumentException("Session id cannot be null");
         }
 
         if (tokenHash == null || tokenHash.isBlank()) {
-            throw new IllegalArgumentException(
-                    "Token hash cannot be null or blank"
-            );
+            throw new IllegalArgumentException("Token hash cannot be null or blank");
         }
 
         if (expiresAt == null) {
-            throw new IllegalArgumentException(
-                    "Expiration time cannot be null"
-            );
+            throw new IllegalArgumentException("Expiration time cannot be null");
         }
 
         this.id = id;
-        this.userId = userId;
+        this.sessionId = sessionId;
         this.tokenHash = tokenHash;
         this.expiresAt = expiresAt;
         this.usedAt = usedAt;
     }
 
-    public static PasswordResetToken issue(
-            Long userId,
+    public static RefreshToken issue(
+            Long sessionId,
             String tokenHash,
             Instant expiresAt
     ) {
-        return new PasswordResetToken(
+        return new RefreshToken(
                 null,
-                userId,
+                sessionId,
                 tokenHash,
                 expiresAt,
                 null
         );
     }
 
-    public static PasswordResetToken reconstitute(
+    public static RefreshToken reconstitute(
             Long id,
-            Long userId,
+            Long sessionId,
             String tokenHash,
             Instant expiresAt,
             Instant usedAt
     ) {
-        return new PasswordResetToken(
+        return new RefreshToken(
                 id,
-                userId,
+                sessionId,
                 tokenHash,
                 expiresAt,
                 usedAt
@@ -72,9 +68,7 @@ public class PasswordResetToken {
 
     public boolean isExpired(Instant now) {
         if (now == null) {
-            throw new IllegalArgumentException(
-                    "Current time cannot be null"
-            );
+            throw new IllegalArgumentException("Current time cannot be null");
         }
 
         return now.compareTo(expiresAt) >= 0;
@@ -90,17 +84,15 @@ public class PasswordResetToken {
 
     public void use(Instant now) {
         if (now == null) {
-            throw new IllegalArgumentException(
-                    "Usage time cannot be null"
-            );
+            throw new IllegalArgumentException("Usage time cannot be null");
         }
 
         if (isUsed()) {
-            throw new PasswordResetTokenAlreadyUsedException();
+            throw new RefreshTokenAlreadyUsedException();
         }
 
         if (isExpired(now)) {
-            throw new PasswordResetTokenExpiredException();
+            throw new RefreshTokenExpiredException();
         }
 
         this.usedAt = now;
@@ -110,8 +102,8 @@ public class PasswordResetToken {
         return id;
     }
 
-    public Long getUserId() {
-        return userId;
+    public Long getSessionId() {
+        return sessionId;
     }
 
     public String getTokenHash() {

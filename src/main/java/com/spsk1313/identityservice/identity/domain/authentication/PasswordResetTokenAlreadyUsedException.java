@@ -1,4 +1,4 @@
-package com.spsk1313.identityservice.identity.domain.auth;
+package com.spsk1313.identityservice.identity.domain.authentication;
 
 public class PasswordResetTokenAlreadyUsedException
         extends RuntimeException {

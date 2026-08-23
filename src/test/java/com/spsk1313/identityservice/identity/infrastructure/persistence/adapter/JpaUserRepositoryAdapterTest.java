@@ -1,17 +1,18 @@
-package com.spsk1313.identityservice.identity.infrastructure.persistence.repository;
+package com.spsk1313.identityservice.identity.infrastructure.persistence.adapter;
 
 import com.spsk1313.identityservice.identity.application.exception.DuplicateEmailException;
 import com.spsk1313.identityservice.identity.application.port.out.UserRepository;
 import com.spsk1313.identityservice.identity.domain.EmailAddress;
 import com.spsk1313.identityservice.identity.domain.User;
+import com.spsk1313.identityservice.identity.infrastructure.persistence.adapter.JpaUserRepositoryAdapter;
 import com.spsk1313.identityservice.identity.infrastructure.persistence.entity.UserJpaEntity;
 import com.spsk1313.identityservice.identity.infrastructure.persistence.mapper.UserPersistenceMapper;
+import com.spsk1313.identityservice.identity.infrastructure.persistence.repository.SpringDataUserRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.context.annotation.Import;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.postgresql.PostgreSQLContainer;

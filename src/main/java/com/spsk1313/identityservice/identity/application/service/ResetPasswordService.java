@@ -7,9 +7,9 @@ import com.spsk1313.identityservice.identity.application.port.out.PasswordResetT
 import com.spsk1313.identityservice.identity.application.port.out.TokenHasher;
 import com.spsk1313.identityservice.identity.application.port.out.UserRepository;
 import com.spsk1313.identityservice.identity.domain.User;
-import com.spsk1313.identityservice.identity.domain.auth.PasswordResetToken;
-import com.spsk1313.identityservice.identity.domain.auth.PasswordResetTokenAlreadyUsedException;
-import com.spsk1313.identityservice.identity.domain.auth.PasswordResetTokenExpiredException;
+import com.spsk1313.identityservice.identity.domain.authentication.PasswordResetToken;
+import com.spsk1313.identityservice.identity.domain.authentication.PasswordResetTokenAlreadyUsedException;
+import com.spsk1313.identityservice.identity.domain.authentication.PasswordResetTokenExpiredException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

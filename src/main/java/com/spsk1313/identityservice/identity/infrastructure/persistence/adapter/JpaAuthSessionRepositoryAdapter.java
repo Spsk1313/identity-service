@@ -1,10 +1,12 @@
-package com.spsk1313.identityservice.identity.infrastructure.persistence.repository;
+package com.spsk1313.identityservice.identity.infrastructure.persistence.adapter;
 
 import com.spsk1313.identityservice.identity.application.port.out.AuthSessionRepository;
-import com.spsk1313.identityservice.identity.domain.auth.AuthSession;
+import com.spsk1313.identityservice.identity.domain.authentication.AuthSession;
 import com.spsk1313.identityservice.identity.infrastructure.persistence.entity.AuthSessionJpaEntity;
 import com.spsk1313.identityservice.identity.infrastructure.persistence.entity.UserJpaEntity;
 import com.spsk1313.identityservice.identity.infrastructure.persistence.mapper.AuthSessionPersistenceMapper;
+import com.spsk1313.identityservice.identity.infrastructure.persistence.repository.SpringDataAuthSessionRepository;
+import com.spsk1313.identityservice.identity.infrastructure.persistence.repository.SpringDataUserRepository;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 

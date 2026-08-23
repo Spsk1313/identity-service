@@ -1,4 +1,4 @@
-package com.spsk1313.identityservice.identity.domain.auth;
+package com.spsk1313.identityservice.identity.domain.authentication;
 
 import org.junit.jupiter.api.Test;
 

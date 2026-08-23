@@ -1,6 +1,6 @@
 package com.spsk1313.identityservice.identity.infrastructure.persistence.mapper;
 
-import com.spsk1313.identityservice.identity.domain.auth.RefreshToken;
+import com.spsk1313.identityservice.identity.domain.authentication.RefreshToken;
 import com.spsk1313.identityservice.identity.infrastructure.persistence.entity.AuthSessionJpaEntity;
 import com.spsk1313.identityservice.identity.infrastructure.persistence.entity.RefreshTokenJpaEntity;
 import org.springframework.stereotype.Component;

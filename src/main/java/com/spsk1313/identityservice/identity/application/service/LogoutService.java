@@ -3,8 +3,8 @@ package com.spsk1313.identityservice.identity.application.service;
 import com.spsk1313.identityservice.identity.application.port.out.AuthSessionRepository;
 import com.spsk1313.identityservice.identity.application.port.out.RefreshTokenRepository;
 import com.spsk1313.identityservice.identity.application.port.out.TokenHasher;
-import com.spsk1313.identityservice.identity.domain.auth.AuthSession;
-import com.spsk1313.identityservice.identity.domain.auth.RefreshToken;
+import com.spsk1313.identityservice.identity.domain.authentication.AuthSession;
+import com.spsk1313.identityservice.identity.domain.authentication.RefreshToken;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

@@ -1,10 +1,12 @@
-package com.spsk1313.identityservice.identity.infrastructure.persistence.repository;
+package com.spsk1313.identityservice.identity.infrastructure.persistence.adapter;
 
 import com.spsk1313.identityservice.identity.application.port.out.RefreshTokenRepository;
-import com.spsk1313.identityservice.identity.domain.auth.RefreshToken;
+import com.spsk1313.identityservice.identity.domain.authentication.RefreshToken;
 import com.spsk1313.identityservice.identity.infrastructure.persistence.entity.AuthSessionJpaEntity;
 import com.spsk1313.identityservice.identity.infrastructure.persistence.entity.RefreshTokenJpaEntity;
 import com.spsk1313.identityservice.identity.infrastructure.persistence.mapper.RefreshTokenPersistenceMapper;
+import com.spsk1313.identityservice.identity.infrastructure.persistence.repository.SpringDataAuthSessionRepository;
+import com.spsk1313.identityservice.identity.infrastructure.persistence.repository.SpringDataRefreshTokenRepository;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 

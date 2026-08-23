@@ -1,13 +1,17 @@
-package com.spsk1313.identityservice.identity.infrastructure.persistence.repository;
+package com.spsk1313.identityservice.identity.infrastructure.persistence.adapter;
 
 import com.spsk1313.identityservice.identity.domain.EmailAddress;
 import com.spsk1313.identityservice.identity.domain.User;
-import com.spsk1313.identityservice.identity.domain.auth.AuthSession;
-import com.spsk1313.identityservice.identity.domain.auth.RefreshToken;
+import com.spsk1313.identityservice.identity.domain.authentication.AuthSession;
+import com.spsk1313.identityservice.identity.domain.authentication.RefreshToken;
+import com.spsk1313.identityservice.identity.infrastructure.persistence.adapter.JpaAuthSessionRepositoryAdapter;
+import com.spsk1313.identityservice.identity.infrastructure.persistence.adapter.JpaRefreshTokenRepositoryAdapter;
+import com.spsk1313.identityservice.identity.infrastructure.persistence.adapter.JpaUserRepositoryAdapter;
 import com.spsk1313.identityservice.identity.infrastructure.persistence.entity.RefreshTokenJpaEntity;
 import com.spsk1313.identityservice.identity.infrastructure.persistence.mapper.AuthSessionPersistenceMapper;
 import com.spsk1313.identityservice.identity.infrastructure.persistence.mapper.RefreshTokenPersistenceMapper;
 import com.spsk1313.identityservice.identity.infrastructure.persistence.mapper.UserPersistenceMapper;
+import com.spsk1313.identityservice.identity.infrastructure.persistence.repository.SpringDataRefreshTokenRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;

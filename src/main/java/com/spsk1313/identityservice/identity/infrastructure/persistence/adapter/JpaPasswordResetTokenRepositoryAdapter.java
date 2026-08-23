@@ -1,9 +1,10 @@
-package com.spsk1313.identityservice.identity.infrastructure.persistence.repository;
+package com.spsk1313.identityservice.identity.infrastructure.persistence.adapter;
 
 import com.spsk1313.identityservice.identity.application.port.out.PasswordResetTokenRepository;
-import com.spsk1313.identityservice.identity.domain.auth.PasswordResetToken;
+import com.spsk1313.identityservice.identity.domain.authentication.PasswordResetToken;
 import com.spsk1313.identityservice.identity.infrastructure.persistence.entity.PasswordResetTokenJpaEntity;
 import com.spsk1313.identityservice.identity.infrastructure.persistence.mapper.PasswordResetTokenPersistenceMapper;
+import com.spsk1313.identityservice.identity.infrastructure.persistence.repository.SpringDataPasswordResetTokenRepository;
 import org.springframework.stereotype.Repository;
 
 import java.time.Instant;

@@ -1,10 +1,11 @@
-package com.spsk1313.identityservice.identity.infrastructure.persistence.repository;
+package com.spsk1313.identityservice.identity.infrastructure.persistence.adapter;
 
 import com.spsk1313.identityservice.identity.application.port.out.EmailVerificationTokenRepository;
 import com.spsk1313.identityservice.identity.domain.verification.EmailVerificationToken;
 import com.spsk1313.identityservice.identity.infrastructure.persistence.entity.EmailVerificationTokenJpaEntity;
 import com.spsk1313.identityservice.identity.infrastructure.persistence.entity.UserJpaEntity;
 import com.spsk1313.identityservice.identity.infrastructure.persistence.mapper.EmailVerificationTokenPersistenceMapper;
+import com.spsk1313.identityservice.identity.infrastructure.persistence.repository.SpringDataEmailVerificationTokenRepository;
 import jakarta.persistence.EntityManager;
 import org.springframework.stereotype.Repository;
 
