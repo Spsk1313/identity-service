@@ -3,6 +3,10 @@ package com.spsk1313.identityservice.identity.infrastructure.persistence.reposit
 import com.spsk1313.identityservice.identity.infrastructure.persistence.entity.AuthSessionJpaEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.util.List;
+
 public interface SpringDataAuthSessionRepository
         extends JpaRepository<AuthSessionJpaEntity, Long> {
+
+    List<AuthSessionJpaEntity> findByUserId(Long userId);
 }

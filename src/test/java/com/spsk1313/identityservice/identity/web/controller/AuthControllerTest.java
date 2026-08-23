@@ -499,4 +499,5 @@ class AuthControllerTest {
 
         verify(logoutService).logout(null);
     }
+
 }

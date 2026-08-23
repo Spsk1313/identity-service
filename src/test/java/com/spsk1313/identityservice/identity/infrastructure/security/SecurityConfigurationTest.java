@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseCookie;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
@@ -21,13 +22,17 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 
+import java.time.Duration;
+
+import static org.hamcrest.Matchers.containsString;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(AuthController.class)
@@ -54,6 +59,9 @@ class SecurityConfigurationTest {
 
     @MockitoBean
     private LogoutService logoutService;
+
+    @MockitoBean
+    private LogoutAllService logoutAllService;
 
     @MockitoBean
     private JwtDecoder jwtDecoder;
@@ -168,4 +176,56 @@ class SecurityConfigurationTest {
                 )
                 .andExpect(status().isNotFound());
     }
+
+    @Test
+    void shouldReturn401WhenAnonymousUserAccessesLogoutAllEndpoint()
+            throws Exception {
+
+        mockMvc.perform(
+                        post("/api/auth/logout-all")
+                                .with(csrf())
+                )
+                .andExpect(status().isUnauthorized());
+
+        verifyNoInteractions(logoutAllService);
+    }
+
+    @Test
+    void shouldAllowAuthenticatedUserToLogoutAllSessions()
+            throws Exception {
+
+        ResponseCookie clearedCookie = ResponseCookie
+                .from("refresh_token", "")
+                .httpOnly(true)
+                .sameSite("Lax")
+                .path("/api/auth")
+                .maxAge(Duration.ZERO)
+                .build();
+
+        when(refreshTokenCookieFactory.clear())
+                .thenReturn(clearedCookie);
+
+        mockMvc.perform(
+                        post("/api/auth/logout-all")
+                                .with(jwt().jwt(jwt -> jwt
+                                        .subject("8")
+                                        .claim(
+                                                "email",
+                                                "login-test@example.com"
+                                        )
+                                ))
+                                .with(csrf())
+                )
+                .andExpect(status().isNoContent())
+                .andExpect(
+                        header().string(
+                                HttpHeaders.SET_COOKIE,
+                                containsString("Max-Age=0")
+                        )
+                );
+
+        verify(logoutAllService).logoutAll(8L);
+        verify(refreshTokenCookieFactory).clear();
+    }
+
 }
