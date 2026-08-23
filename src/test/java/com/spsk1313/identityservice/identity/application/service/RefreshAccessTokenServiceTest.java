@@ -15,6 +15,11 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import com.spsk1313.identityservice.identity.application.port.in.AuthorizationResolver;
+import com.spsk1313.identityservice.identity.domain.authorization.RoleName;
+import com.spsk1313.identityservice.identity.domain.authorization.UserAuthorization;
+
+import java.util.Set;
 
 import java.time.Clock;
 import java.time.Duration;
@@ -49,6 +54,9 @@ class RefreshAccessTokenServiceTest {
 
     @Mock
     private AccessTokenIssuer accessTokenIssuer;
+
+    @Mock
+    private AuthorizationResolver authorizationResolver;
 
     private RefreshAccessTokenService service;
 
@@ -87,7 +95,8 @@ class RefreshAccessTokenServiceTest {
                 tokenHasher,
                 tokenGenerator,
                 accessTokenIssuer,
-                clock
+                clock,
+                authorizationResolver
         );
     }
 
@@ -96,6 +105,12 @@ class RefreshAccessTokenServiceTest {
         RefreshToken currentRefreshToken = activeRefreshToken();
         AuthSession session = activeSession();
         User user = activeUser();
+        UserAuthorization authorization =
+                UserAuthorization.of(
+                        USER_ID,
+                        Set.of(RoleName.USER),
+                        Set.of()
+                );
 
         when(tokenHasher.hash(RAW_REFRESH_TOKEN))
                 .thenReturn(CURRENT_TOKEN_HASH);
@@ -115,8 +130,14 @@ class RefreshAccessTokenServiceTest {
         when(tokenHasher.hash(NEW_RAW_REFRESH_TOKEN))
                 .thenReturn(NEW_TOKEN_HASH);
 
-        when(accessTokenIssuer.issue(USER_ID, EMAIL))
-                .thenReturn(NEW_ACCESS_TOKEN);
+        when(authorizationResolver.resolve(USER_ID))
+                .thenReturn(authorization);
+
+        when(accessTokenIssuer.issue(
+                USER_ID,
+                EMAIL,
+                authorization
+        )).thenReturn(NEW_ACCESS_TOKEN);
 
         RefreshAccessTokenResult result = service.refresh(
                 new RefreshAccessTokenCommand(RAW_REFRESH_TOKEN)
@@ -180,7 +201,15 @@ class RefreshAccessTokenServiceTest {
         verify(tokenHasher).hash(NEW_RAW_REFRESH_TOKEN);
 
         verify(tokenGenerator).generate();
-        verify(accessTokenIssuer).issue(USER_ID, EMAIL);
+        verify(authorizationResolver)
+                .resolve(USER_ID);
+
+        verify(accessTokenIssuer)
+                .issue(
+                        USER_ID,
+                        EMAIL,
+                        authorization
+                );
 
         verifyNoInteractions(revokeAuthSessionService);
     }

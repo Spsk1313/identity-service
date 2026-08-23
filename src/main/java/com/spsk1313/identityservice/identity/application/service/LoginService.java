@@ -4,6 +4,7 @@ import com.spsk1313.identityservice.identity.application.command.LoginCommand;
 import com.spsk1313.identityservice.identity.application.exception.AccountDisabledException;
 import com.spsk1313.identityservice.identity.application.exception.EmailNotVerifiedException;
 import com.spsk1313.identityservice.identity.application.exception.InvalidCredentialsException;
+import com.spsk1313.identityservice.identity.application.port.in.AuthorizationResolver;
 import com.spsk1313.identityservice.identity.application.port.out.*;
 import com.spsk1313.identityservice.identity.application.result.LoginResult;
 import com.spsk1313.identityservice.identity.domain.AccountStatus;
@@ -11,6 +12,7 @@ import com.spsk1313.identityservice.identity.domain.EmailAddress;
 import com.spsk1313.identityservice.identity.domain.User;
 import com.spsk1313.identityservice.identity.domain.authentication.AuthSession;
 import com.spsk1313.identityservice.identity.domain.authentication.RefreshToken;
+import com.spsk1313.identityservice.identity.domain.authorization.UserAuthorization;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,6 +30,7 @@ public class LoginService {
     private final TokenHasher tokenHasher;
     private final AccessTokenIssuer accessTokenIssuer;
     private final Clock clock;
+    private final AuthorizationResolver authorizationResolver;
 
     private static final Duration SESSION_TTL = Duration.ofDays(30);
 
@@ -39,7 +42,8 @@ public class LoginService {
             RawTokenGenerator rawTokenGenerator,
             TokenHasher tokenHasher,
             AccessTokenIssuer accessTokenIssuer,
-            Clock clock
+            Clock clock,
+            AuthorizationResolver authorizationResolver
     ) {
         this.userRepository = userRepository;
         this.passwordHasher = passwordHasher;
@@ -49,6 +53,7 @@ public class LoginService {
         this.tokenHasher = tokenHasher;
         this.accessTokenIssuer = accessTokenIssuer;
         this.clock = clock;
+        this.authorizationResolver = authorizationResolver;
     }
 
     @Transactional
@@ -83,7 +88,9 @@ public class LoginService {
 
         refreshTokenRepository.save(refreshToken);
 
-        String accessToken = accessTokenIssuer.issue(user.getId(), user.getEmail().value());
+        UserAuthorization authorization = authorizationResolver.resolve(user.getId());
+
+        String accessToken = accessTokenIssuer.issue(user.getId(), user.getEmail().value(), authorization);
 
         return new LoginResult(user.getId(), user.getEmail().value(), accessToken, rawRefreshToken);
     }

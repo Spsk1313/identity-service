@@ -2,6 +2,7 @@ package com.spsk1313.identityservice.identity.application.service;
 
 import com.spsk1313.identityservice.identity.application.command.RefreshAccessTokenCommand;
 import com.spsk1313.identityservice.identity.application.exception.InvalidRefreshTokenException;
+import com.spsk1313.identityservice.identity.application.port.in.AuthorizationResolver;
 import com.spsk1313.identityservice.identity.application.port.out.*;
 import com.spsk1313.identityservice.identity.application.result.RefreshAccessTokenResult;
 import com.spsk1313.identityservice.identity.domain.AccountStatus;
@@ -10,6 +11,7 @@ import com.spsk1313.identityservice.identity.domain.authentication.AuthSession;
 import com.spsk1313.identityservice.identity.domain.authentication.RefreshToken;
 import com.spsk1313.identityservice.identity.domain.authentication.RefreshTokenAlreadyUsedException;
 import com.spsk1313.identityservice.identity.domain.authentication.RefreshTokenExpiredException;
+import com.spsk1313.identityservice.identity.domain.authorization.UserAuthorization;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,6 +32,7 @@ public class RefreshAccessTokenService {
     private final AccessTokenIssuer accessTokenIssuer;
 
     private final Clock clock;
+    private final AuthorizationResolver authorizationResolver;
 
     public RefreshAccessTokenService(
             RevokeAuthSessionService revokeAuthSessionService,
@@ -39,7 +42,8 @@ public class RefreshAccessTokenService {
             TokenHasher tokenHasher,
             RawTokenGenerator tokenGenerator,
             AccessTokenIssuer accessTokenIssuer,
-            Clock clock
+            Clock clock,
+            AuthorizationResolver authorizationResolver
     ) {
         this.revokeAuthSessionService = revokeAuthSessionService;
         this.refreshTokenRepository = refreshTokenRepository;
@@ -49,6 +53,7 @@ public class RefreshAccessTokenService {
         this.tokenGenerator = tokenGenerator;
         this.accessTokenIssuer = accessTokenIssuer;
         this.clock = clock;
+        this.authorizationResolver = authorizationResolver;
     }
 
     @Transactional
@@ -108,9 +113,12 @@ public class RefreshAccessTokenService {
 
         refreshTokenRepository.save(newRefreshToken);
 
+        UserAuthorization authorization = authorizationResolver.resolve(user.getId());
+
         String newAccessToken = accessTokenIssuer.issue(
                 user.getId(),
-                user.getEmail().value()
+                user.getEmail().value(),
+                authorization
         );
 
         return new RefreshAccessTokenResult(

@@ -4,6 +4,7 @@ import com.spsk1313.identityservice.identity.application.command.LoginCommand;
 import com.spsk1313.identityservice.identity.application.exception.AccountDisabledException;
 import com.spsk1313.identityservice.identity.application.exception.EmailNotVerifiedException;
 import com.spsk1313.identityservice.identity.application.exception.InvalidCredentialsException;
+import com.spsk1313.identityservice.identity.application.port.in.AuthorizationResolver;
 import com.spsk1313.identityservice.identity.application.port.out.*;
 import com.spsk1313.identityservice.identity.application.result.LoginResult;
 import com.spsk1313.identityservice.identity.domain.AccountStatus;
@@ -11,6 +12,8 @@ import com.spsk1313.identityservice.identity.domain.EmailAddress;
 import com.spsk1313.identityservice.identity.domain.User;
 import com.spsk1313.identityservice.identity.domain.authentication.AuthSession;
 import com.spsk1313.identityservice.identity.domain.authentication.RefreshToken;
+import com.spsk1313.identityservice.identity.domain.authorization.RoleName;
+import com.spsk1313.identityservice.identity.domain.authorization.UserAuthorization;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -23,6 +26,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.Optional;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -51,14 +55,19 @@ class LoginServiceTest {
     @Mock
     private AccessTokenIssuer accessTokenIssuer;
 
+    @Mock
+    private AuthorizationResolver authorizationResolver;
+
     private LoginService loginService;
 
     private static final Long USER_ID = 1L;
     private static final Long SESSION_ID = 10L;
 
     private static final String EMAIL = "sahil@example.com";
-    private static final String PASSWORD = "correct-horse-battery-staple";
-    private static final String PASSWORD_HASH = "stored-password-hash";
+    private static final String PASSWORD =
+            "correct-horse-battery-staple";
+    private static final String PASSWORD_HASH =
+            "stored-password-hash";
 
     private static final String USER_AGENT =
             "Mozilla/5.0 Test Browser";
@@ -93,7 +102,8 @@ class LoginServiceTest {
                 rawTokenGenerator,
                 tokenHasher,
                 accessTokenIssuer,
-                clock
+                clock,
+                authorizationResolver
         );
     }
 
@@ -101,23 +111,31 @@ class LoginServiceTest {
     void shouldLoginAndIssueCredentialsWhenAuthenticationIsValid() {
         User user = verifiedActiveUser();
 
-        AuthSession persistedSession = AuthSession.reconstitute(
-                SESSION_ID,
-                USER_ID,
-                SESSION_EXPIRES_AT,
-                null,
-                null,
-                USER_AGENT
-        );
+        UserAuthorization authorization =
+                userAuthorization();
 
-        when(userRepository.findByEmail(new EmailAddress(EMAIL)))
-                .thenReturn(Optional.of(user));
+        AuthSession persistedSession =
+                AuthSession.reconstitute(
+                        SESSION_ID,
+                        USER_ID,
+                        SESSION_EXPIRES_AT,
+                        null,
+                        null,
+                        USER_AGENT
+                );
 
-        when(passwordHasher.matches(PASSWORD, PASSWORD_HASH))
-                .thenReturn(true);
+        when(userRepository.findByEmail(
+                new EmailAddress(EMAIL)
+        )).thenReturn(Optional.of(user));
 
-        when(authSessionRepository.save(any(AuthSession.class)))
-                .thenReturn(persistedSession);
+        when(passwordHasher.matches(
+                PASSWORD,
+                PASSWORD_HASH
+        )).thenReturn(true);
+
+        when(authSessionRepository.save(
+                any(AuthSession.class)
+        )).thenReturn(persistedSession);
 
         when(rawTokenGenerator.generate())
                 .thenReturn(RAW_REFRESH_TOKEN);
@@ -125,33 +143,62 @@ class LoginServiceTest {
         when(tokenHasher.hash(RAW_REFRESH_TOKEN))
                 .thenReturn(REFRESH_TOKEN_HASH);
 
-        when(accessTokenIssuer.issue(USER_ID, EMAIL))
-                .thenReturn(ACCESS_TOKEN);
+        when(authorizationResolver.resolve(USER_ID))
+                .thenReturn(authorization);
 
-        LoginCommand command = new LoginCommand(
+        when(accessTokenIssuer.issue(
+                USER_ID,
                 EMAIL,
-                PASSWORD,
-                USER_AGENT
-        );
+                authorization
+        )).thenReturn(ACCESS_TOKEN);
 
-        LoginResult result = loginService.login(command);
+        LoginCommand command =
+                new LoginCommand(
+                        EMAIL,
+                        PASSWORD,
+                        USER_AGENT
+                );
+
+        LoginResult result =
+                loginService.login(command);
 
         assertEquals(USER_ID, result.userId());
         assertEquals(EMAIL, result.email());
-        assertEquals(ACCESS_TOKEN, result.accessToken());
-        assertEquals(RAW_REFRESH_TOKEN, result.refreshToken());
+        assertEquals(
+                ACCESS_TOKEN,
+                result.accessToken()
+        );
+        assertEquals(
+                RAW_REFRESH_TOKEN,
+                result.refreshToken()
+        );
 
         ArgumentCaptor<AuthSession> sessionCaptor =
-                ArgumentCaptor.forClass(AuthSession.class);
+                ArgumentCaptor.forClass(
+                        AuthSession.class
+                );
 
         verify(authSessionRepository)
                 .save(sessionCaptor.capture());
 
-        AuthSession session = sessionCaptor.getValue();
+        AuthSession session =
+                sessionCaptor.getValue();
 
-        assertEquals(USER_ID, session.getUserId());
-        assertEquals(SESSION_EXPIRES_AT, session.getExpiresAt());
-        assertEquals(USER_AGENT, session.getUserAgent());
+        assertEquals(
+                USER_ID,
+                session.getUserId()
+        );
+
+        assertEquals(
+                SESSION_EXPIRES_AT,
+                session.getExpiresAt()
+        );
+
+        assertEquals(
+                USER_AGENT,
+                session.getUserAgent()
+        );
+
         assertNull(session.getRevokedAt());
         assertNull(session.getLastUsedAt());
 
@@ -161,7 +208,9 @@ class LoginServiceTest {
                 .hash(RAW_REFRESH_TOKEN);
 
         ArgumentCaptor<RefreshToken> refreshTokenCaptor =
-                ArgumentCaptor.forClass(RefreshToken.class);
+                ArgumentCaptor.forClass(
+                        RefreshToken.class
+                );
 
         verify(refreshTokenRepository)
                 .save(refreshTokenCaptor.capture());
@@ -189,20 +238,29 @@ class LoginServiceTest {
                 refreshToken.getTokenHash()
         );
 
+        verify(authorizationResolver)
+                .resolve(USER_ID);
+
         verify(accessTokenIssuer)
-                .issue(USER_ID, EMAIL);
+                .issue(
+                        USER_ID,
+                        EMAIL,
+                        authorization
+                );
     }
 
     @Test
     void shouldRejectLoginWhenEmailDoesNotExist() {
-        when(userRepository.findByEmail(new EmailAddress(EMAIL)))
-                .thenReturn(Optional.empty());
+        when(userRepository.findByEmail(
+                new EmailAddress(EMAIL)
+        )).thenReturn(Optional.empty());
 
-        LoginCommand command = new LoginCommand(
-                EMAIL,
-                PASSWORD,
-                USER_AGENT
-        );
+        LoginCommand command =
+                new LoginCommand(
+                        EMAIL,
+                        PASSWORD,
+                        USER_AGENT
+                );
 
         assertThrows(
                 InvalidCredentialsException.class,
@@ -210,6 +268,7 @@ class LoginServiceTest {
         );
 
         verifyNoInteractions(passwordHasher);
+
         verifyNoAuthenticationArtifactsCreated();
     }
 
@@ -217,17 +276,21 @@ class LoginServiceTest {
     void shouldRejectLoginWhenPasswordIsIncorrect() {
         User user = verifiedActiveUser();
 
-        when(userRepository.findByEmail(new EmailAddress(EMAIL)))
-                .thenReturn(Optional.of(user));
+        when(userRepository.findByEmail(
+                new EmailAddress(EMAIL)
+        )).thenReturn(Optional.of(user));
 
-        when(passwordHasher.matches(PASSWORD, PASSWORD_HASH))
-                .thenReturn(false);
-
-        LoginCommand command = new LoginCommand(
-                EMAIL,
+        when(passwordHasher.matches(
                 PASSWORD,
-                USER_AGENT
-        );
+                PASSWORD_HASH
+        )).thenReturn(false);
+
+        LoginCommand command =
+                new LoginCommand(
+                        EMAIL,
+                        PASSWORD,
+                        USER_AGENT
+                );
 
         assertThrows(
                 InvalidCredentialsException.class,
@@ -239,25 +302,30 @@ class LoginServiceTest {
 
     @Test
     void shouldRejectLoginWhenEmailIsNotVerified() {
-        User user = User.reconstitute(
-                USER_ID,
-                new EmailAddress(EMAIL),
-                PASSWORD_HASH,
-                false,
-                AccountStatus.ACTIVE
-        );
+        User user =
+                User.reconstitute(
+                        USER_ID,
+                        new EmailAddress(EMAIL),
+                        PASSWORD_HASH,
+                        false,
+                        AccountStatus.ACTIVE
+                );
 
-        when(userRepository.findByEmail(new EmailAddress(EMAIL)))
-                .thenReturn(Optional.of(user));
+        when(userRepository.findByEmail(
+                new EmailAddress(EMAIL)
+        )).thenReturn(Optional.of(user));
 
-        when(passwordHasher.matches(PASSWORD, PASSWORD_HASH))
-                .thenReturn(true);
-
-        LoginCommand command = new LoginCommand(
-                EMAIL,
+        when(passwordHasher.matches(
                 PASSWORD,
-                USER_AGENT
-        );
+                PASSWORD_HASH
+        )).thenReturn(true);
+
+        LoginCommand command =
+                new LoginCommand(
+                        EMAIL,
+                        PASSWORD,
+                        USER_AGENT
+                );
 
         assertThrows(
                 EmailNotVerifiedException.class,
@@ -269,25 +337,30 @@ class LoginServiceTest {
 
     @Test
     void shouldRejectLoginWhenAccountIsDisabled() {
-        User user = User.reconstitute(
-                USER_ID,
-                new EmailAddress(EMAIL),
-                PASSWORD_HASH,
-                true,
-                AccountStatus.DISABLED
-        );
+        User user =
+                User.reconstitute(
+                        USER_ID,
+                        new EmailAddress(EMAIL),
+                        PASSWORD_HASH,
+                        true,
+                        AccountStatus.DISABLED
+                );
 
-        when(userRepository.findByEmail(new EmailAddress(EMAIL)))
-                .thenReturn(Optional.of(user));
+        when(userRepository.findByEmail(
+                new EmailAddress(EMAIL)
+        )).thenReturn(Optional.of(user));
 
-        when(passwordHasher.matches(PASSWORD, PASSWORD_HASH))
-                .thenReturn(true);
-
-        LoginCommand command = new LoginCommand(
-                EMAIL,
+        when(passwordHasher.matches(
                 PASSWORD,
-                USER_AGENT
-        );
+                PASSWORD_HASH
+        )).thenReturn(true);
+
+        LoginCommand command =
+                new LoginCommand(
+                        EMAIL,
+                        PASSWORD,
+                        USER_AGENT
+                );
 
         assertThrows(
                 AccountDisabledException.class,
@@ -307,13 +380,22 @@ class LoginServiceTest {
         );
     }
 
+    private UserAuthorization userAuthorization() {
+        return UserAuthorization.of(
+                USER_ID,
+                Set.of(RoleName.USER),
+                Set.of()
+        );
+    }
+
     private void verifyNoAuthenticationArtifactsCreated() {
         verifyNoInteractions(
                 authSessionRepository,
                 refreshTokenRepository,
                 rawTokenGenerator,
                 tokenHasher,
-                accessTokenIssuer
+                accessTokenIssuer,
+                authorizationResolver
         );
     }
 }
