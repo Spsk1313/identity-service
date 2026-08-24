@@ -10,4 +10,8 @@ public interface SpringDataUserRoleRepository
                 UserRoleId
                 > {
 
+    boolean existsByIdUserIdAndIdRoleId(
+            Long userId,
+            Long roleId
+    );
 }

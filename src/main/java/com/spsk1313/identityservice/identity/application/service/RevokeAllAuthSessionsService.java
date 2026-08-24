@@ -1,5 +1,6 @@
 package com.spsk1313.identityservice.identity.application.service;
 
+import com.spsk1313.identityservice.identity.application.port.in.UserSessionRevoker;
 import com.spsk1313.identityservice.identity.application.port.out.AuthSessionRepository;
 import com.spsk1313.identityservice.identity.domain.authentication.AuthSession;
 import jakarta.transaction.Transactional;
@@ -9,8 +10,8 @@ import java.time.Clock;
 import java.time.Instant;
 
 @Service
-public class RevokeAllAuthSessionsService {
-
+public class RevokeAllAuthSessionsService
+        implements UserSessionRevoker {
     private final AuthSessionRepository authSessionRepository;
     private final Clock clock;
 
@@ -23,6 +24,7 @@ public class RevokeAllAuthSessionsService {
     }
 
     @Transactional
+    @Override
     public void revokeAll(Long userId) {
         if (userId == null) {
             throw new IllegalArgumentException(
