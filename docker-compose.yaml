@@ -21,26 +21,14 @@ services:
       retries: 5
       start_period: 10s
 
-
-  redis:
-    image: redis:7-alpine
-    container_name: identity-service-redis
-    ports:
-      - "6379:6379"
-
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 5s
-      timeout: 5s
-      retries: 3
-      start_period: 5s
-
   mailpit:
     image: axllent/mailpit:v1.30
     container_name: identity-service-mailpit
+
     ports:
       - "1025:1025"
       - "8025:8025"
+
     healthcheck:
       test: ["CMD", "/mailpit", "readyz"]
       interval: 5s
@@ -48,6 +36,35 @@ services:
       retries: 3
       start_period: 10s
 
+  identity-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+
+    container_name: identity-service-app
+
+    user: "${HOST_UID}:${HOST_GID}"
+
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      APP_BASE_URL: http://localhost:8080
+      JWT_ISSUER: http://localhost:8080
+
+    ports:
+      - "8080:8080"
+
+    volumes:
+      - ./keys:/app/keys:ro
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+      mailpit:
+        condition: service_healthy
+
 volumes:
   identity-service-postgres-data:
-

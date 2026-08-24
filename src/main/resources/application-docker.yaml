@@ -1,6 +1,6 @@
 spring:
   datasource:
-    url: jdbc:postgresql://localhost:5434/${POSTGRES_DB}
+    url: jdbc:postgresql://postgres:5432/${POSTGRES_DB}
     username: ${POSTGRES_USER}
     password: ${POSTGRES_PASSWORD}
 
@@ -9,21 +9,21 @@ spring:
       ddl-auto: validate
 
   mail:
-    host: localhost
+    host: mailpit
     port: 1025
 
 logging:
   level:
-    com.spsk1313.identityservice: DEBUG
+    com.spsk1313.identityservice: INFO
   pattern:
     correlation: '%replace( [requestId=%X{requestId}] ){''\[requestId=\s*\]'', ''''}'
 
 app:
   verification:
-    base-url: http://localhost:8080
+    base-url: ${APP_BASE_URL:http://localhost:8080}
 
   jwt:
-    issuer: http://localhost:8080
+    issuer: ${JWT_ISSUER:http://localhost:8080}
     access-token-ttl: 15m
-    private-key: file:keys/private.pem
-    public-key: file:keys/public.pem
+    private-key: file:/app/keys/private.pem
+    public-key: file:/app/keys/public.pem
