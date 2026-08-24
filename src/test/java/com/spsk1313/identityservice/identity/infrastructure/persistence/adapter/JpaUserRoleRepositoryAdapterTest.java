@@ -130,4 +130,104 @@ class JpaUserRoleRepositoryAdapterTest {
                 userRoleRepository
         );
     }
+
+    @Test
+    void shouldReturnTrueWhenUserAlreadyHasRole() {
+        RoleJpaEntity roleEntity =
+                mock(RoleJpaEntity.class);
+
+        when(roleRepository.findByName(
+                RoleName.MODERATOR
+        )).thenReturn(Optional.of(roleEntity));
+
+        when(roleEntity.getId())
+                .thenReturn(2L);
+
+        when(userRoleRepository
+                .existsByIdUserIdAndIdRoleId(
+                        42L,
+                        2L
+                ))
+                .thenReturn(true);
+
+        boolean exists =
+                adapter.existsByUserIdAndRole(
+                        42L,
+                        RoleName.MODERATOR
+                );
+
+        assertTrue(exists);
+
+        verify(roleRepository)
+                .findByName(RoleName.MODERATOR);
+
+        verify(userRoleRepository)
+                .existsByIdUserIdAndIdRoleId(
+                        42L,
+                        2L
+                );
+    }
+
+    @Test
+    void shouldReturnFalseWhenUserDoesNotHaveRole() {
+        RoleJpaEntity roleEntity =
+                mock(RoleJpaEntity.class);
+
+        when(roleRepository.findByName(
+                RoleName.MODERATOR
+        )).thenReturn(Optional.of(roleEntity));
+
+        when(roleEntity.getId())
+                .thenReturn(2L);
+
+        when(userRoleRepository
+                .existsByIdUserIdAndIdRoleId(
+                        42L,
+                        2L
+                ))
+                .thenReturn(false);
+
+        boolean exists =
+                adapter.existsByUserIdAndRole(
+                        42L,
+                        RoleName.MODERATOR
+                );
+
+        assertFalse(exists);
+
+        verify(roleRepository)
+                .findByName(RoleName.MODERATOR);
+
+        verify(userRoleRepository)
+                .existsByIdUserIdAndIdRoleId(
+                        42L,
+                        2L
+                );
+    }
+
+    @Test
+    void shouldRejectExistsCheckWhenRequiredRoleDoesNotExist() {
+        when(roleRepository.findByName(
+                RoleName.MODERATOR
+        )).thenReturn(Optional.empty());
+
+        IllegalStateException exception =
+                assertThrows(
+                        IllegalStateException.class,
+                        () -> adapter.existsByUserIdAndRole(
+                                42L,
+                                RoleName.MODERATOR
+                        )
+                );
+
+        assertEquals(
+                "Required role does not exist: MODERATOR",
+                exception.getMessage()
+        );
+
+        verify(roleRepository)
+                .findByName(RoleName.MODERATOR);
+
+        verifyNoInteractions(userRoleRepository);
+    }
 }

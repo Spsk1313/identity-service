@@ -1,6 +1,7 @@
 package com.spsk1313.identityservice.identity.infrastructure.persistence.adapter;
 
 import com.spsk1313.identityservice.identity.application.port.out.UserRoleRepository;
+import com.spsk1313.identityservice.identity.domain.authorization.RoleName;
 import com.spsk1313.identityservice.identity.domain.authorization.UserRole;
 import com.spsk1313.identityservice.identity.infrastructure.persistence.entity.RoleJpaEntity;
 import com.spsk1313.identityservice.identity.infrastructure.persistence.entity.UserRoleJpaEntity;
@@ -53,5 +54,21 @@ public class JpaUserRoleRepositoryAdapter
                 userRole.getUserId(),
                 userRole.getRole()
         );
+    }
+
+    @Override
+    public boolean existsByUserIdAndRole(Long userId, RoleName role) {
+        RoleJpaEntity roleEntity = roleRepository
+                .findByName(role)
+                .orElseThrow(() ->
+                        new IllegalStateException(
+                                "Required role does not exist: "
+                                        + role
+                        )
+                );
+
+        return userRoleRepository
+                .existsByIdUserIdAndIdRoleId(userId, roleEntity.getId()
+                );
     }
 }
